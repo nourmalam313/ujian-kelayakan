@@ -1,0 +1,2037 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Ujian Kelayakan Tingkatan Satu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.3.2/papaparse.min.js"></script>
+    <style>
+        .teacher-table-wrapper{overflow-x: auto;}
+        .teacher-table-wrapper table{min-width: 1200px;}
+        #teacher-table-body td:nth-child(1),#teacher-table-body td:nth-child(2),#teacher-table-body td:nth-child(3),#teacher-table-body td:nth-child(4),#teacher-section thead th{position: initial !important; left: initial !important; background-color: initial !important;}
+        #teacher-table-body td{width: auto !important;}
+        @media (max-width: 1023px) {
+            .admin-table-wrapper {overflow-x: auto;}
+            .admin-table-wrapper table {min-width: 1200px; width: 100%;}
+        }
+
+        /* Ujian CSS Styles */
+        @import url('https://fonts.googleapis.com/css2?family=Arial&family=Lateef&display=swap');
+        
+        #ujian-container-inner {
+            font-family: Arial, sans-serif;
+            background-color: #e0f7fa; 
+            color: #333;
+            min-height: 100vh;
+            padding: 20px 0;
+            position: relative;
+        }
+
+        #ujian-container-inner .main-container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            position: relative;
+        }
+
+        #ujian-container-inner .background-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://i.postimg.cc/D0pqvnTy/SMAAM2024.png');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.5;
+            z-index: -1;
+            border-radius: 15px;
+        }
+
+        #ujian-container-inner .header {
+            text-align: center;
+            padding: 20px;
+            border-bottom: 2px solid #b2ebf2;
+        }
+
+        #ujian-container-inner .header .logos {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        #ujian-container-inner .header .logos img {
+            height: 70px;
+            object-fit: contain;
+        }
+
+        #ujian-container-inner .content {
+            padding: 25px;
+        }
+
+        #ujian-container-inner h1, #ujian-container-inner h2 {
+            color: #00796b;
+            text-align: center;
+        }
+
+        #start-page .form-group { margin-bottom: 20px; }
+        #start-page label { display: block; margin-bottom: 8px; font-weight: bold; color: #004d40; text-align: left; }
+        #start-page input, #start-page select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; background-color: #fff; }
+        #start-page input[type="text"] { text-transform: uppercase; }
+        #start-page input::placeholder { color: #aaa; font-style: italic; text-transform: none; }
+        #start-page .instructions { margin-top: 25px; padding: 15px; background-color: #fffde7; border-left: 5px solid #ffc107; border-radius: 5px; text-align: left; }
+        #start-page ul { padding-left: 20px; list-style-type: '✓ '; }
+        
+        #ujian-container-inner .start-btn {
+            display: block; width: 100%; padding: 15px; background-color: #007bff; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: background-color 0.3s; margin-top: 20px;
+        }
+        #ujian-container-inner .start-btn:hover { background-color: #0056b3; }
+
+        #test-page { display: none; }
+        #ujian-container-inner .test-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid #ddd; flex-wrap: wrap; gap: 15px; }
+        #timer { font-size: 1.5em; font-weight: bold; color: #d32f2f; background-color: #ffebee; padding: 5px 15px; border-radius: 20px; }
+        #ujian-container-inner .subject-tabs { display: flex; justify-content: center; gap: 5px; margin: 20px 0; flex-wrap: wrap; }
+        #ujian-container-inner .tab { padding: 12px 20px; border: none; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: bold; transition: all 0.3s; display: flex; align-items: center; gap: 8px; }
+        #ujian-container-inner .tab.active { transform: translateY(-5px); box-shadow: 0 -4px 8px rgba(0,0,0,0.1); }
+        #ujian-container-inner .tab[data-subject="bm"] { background-color: #64b5f6; color: white; }
+        #ujian-container-inner .tab[data-subject="bi"] { background-color: #ff80ab; color: white; }
+        #ujian-container-inner .tab[data-subject="ba"] { background-color: #81c784; color: white; }
+        #ujian-container-inner .tab[data-subject="mt"] { background-color: #ffd54f; color: #333; }
+        #ujian-container-inner .tab.locked { background-color: #bdbdbd; cursor: not-allowed; color: #616161; }
+        
+        #progress-bar-container { width: 100%; background-color: #e0e0e0; border-radius: 5px; overflow: hidden; margin: 15px 0; }
+        #progress-bar { height: 10px; background-color: #4caf50; width: 0%; transition: width 0.3s; }
+        
+        #ujian-container-inner .question-container { min-height: 250px; padding: 20px; background-color: #ffffff; border: 1px solid #eee; border-radius: 10px; margin-bottom: 20px; text-align: left; }
+        #ujian-container-inner .question-number { font-weight: bold; color: #00796b; margin-bottom: 15px; }
+        #ujian-container-inner .question-text { margin-bottom: 20px; line-height: 1.6; }
+        #ujian-container-inner .question-text img, #ujian-container-inner .options img { max-width: 100%; height: auto; display: block; margin: 10px auto; border-radius: 8px; }
+        #ujian-container-inner .options .option { display: block; margin-bottom: 10px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; }
+        #ujian-container-inner .options .option:hover { background-color: #f1f8e9; }
+        #ujian-container-inner .options .option input { margin-right: 10px; }
+        #ujian-container-inner .options .option.selected { background-color: #c5e1a5; border-color: #7cb342; }
+        
+        #ujian-container-inner .navigation-buttons { display: flex; justify-content: space-between; align-items: center; }
+        #ujian-container-inner .nav-btn, #ujian-container-inner .submit-btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background-color: 0.3s; }
+        #ujian-container-inner .nav-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+        #ujian-container-inner .nav-btn { background-color: #ffab40; color: white; }
+        #ujian-container-inner .submit-btn { background-color: #d32f2f; color: white; }
+        #ujian-container-inner .submit-btn:hover { background-color: #b71c1c; }
+        #ujian-container-inner .arabic-question { direction: rtl; font-family: 'Traditional Arabic', 'Lateef', serif; font-size: 24px; text-align: right; }
+
+        #results-page { display: none; text-align: center; }
+        #results-page h2 { color: #004d40; }
+        #ujian-container-inner .table-responsive-wrapper { overflow-x: auto; width: 100%; }
+        #student-info-summary { margin-bottom: 25px; }
+        #results-summary { margin-top: 20px; text-align: left; display: block; }
+        #results-summary table { width: 100%; border-collapse: collapse; }
+        #results-summary th, #results-summary td { padding: 12px; border: 1px solid #ddd; }
+        #results-summary th { background-color: #e0f2f1; }
+        #results-page .final-note { margin-top: 25px; padding: 15px; background-color: #e3f2fd; border-left: 5px solid #2196f3; border-radius: 5px; text-align: left; }
+        #submission-status { font-style: italic; color: #555; margin-top: 10px; font-weight: bold; }
+
+        @media (max-width: 600px) {
+            #ujian-container-inner { padding: 10px 0; }
+            #ujian-container-inner .main-container { margin: 0 10px; width: auto; }
+            #ujian-container-inner .header .logos { gap: 15px; }
+            #ujian-container-inner .header .logos img { height: 50px; }
+            #ujian-container-inner .content { padding: 15px; }
+            #ujian-container-inner .tab { padding: 10px 15px; font-size: 14px; }
+            #ujian-container-inner .test-header { flex-direction: column; align-items: center; }
+            #results-summary th, #results-summary td { padding: 8px; }
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {'navy': '#1e3a8a','navy-dark': '#1e40af','navy-light': '#3b82f6','admin-menu': '#0d3c55'},
+                    spacing: {'12': '3rem','24': '6rem','72': '18rem'}
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Main Content Wrapper -->
+    <div id="main-wrapper">
+        <!-- Navigation -->
+        <nav class="bg-navy shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-wrap justify-between items-center min-h-16 py-2">
+                    <div class="flex items-center">
+                        <h1 class="text-white text-base sm:text-lg font-bold">Portal Ujian Kelayakan</h1>
+                    </div>
+                    <div class="flex flex-wrap justify-end gap-x-1 sm:gap-x-2 items-center">
+                        <button onclick="showSection('parent')" id="nav-parent" class="nav-btn text-white px-3 py-2 text-sm sm:text-base sm:px-4 rounded-md hover:bg-navy-light transition-colors">IBU BAPA</button>
+                        <button onclick="showSection('murid')" id="nav-murid" class="nav-btn text-white px-3 py-2 text-sm sm:text-base sm:px-4 rounded-md hover:bg-navy-light transition-colors">MURID</button>
+                        <button onclick="showSection('teacher')" id="nav-teacher" class="nav-btn text-white px-3 py-2 text-sm sm:text-base sm:px-4 rounded-md hover:bg-navy-light transition-colors">GURU</button>
+                        <button onclick="showSection('admin')" id="nav-admin" class="nav-btn text-white px-3 py-2 text-sm sm:text-base sm:px-4 rounded-md hover:bg-navy-light transition-colors">ADMIN</button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Parent Portal -->
+        <div id="parent-section" class="section">
+            <div class="bg-gradient-to-r from-navy to-navy-light text-white py-6 sm:py-8">
+                <div class="max-w-4xl mx-auto px-4 text-center">
+                    <div class="flex justify-center items-center gap-4 sm:gap-8 mb-4">
+                        <img src="https://i.postimg.cc/9fd8BWWM/smaam-background-BARU.png" alt="Logo SMAAM" class="h-12 sm:h-16 w-auto" onerror="this.src=''; this.alt='Logo failed to load'; this.style.display='none';">
+                        <img src="https://i.postimg.cc/X7FzHcbN/Logo-KPM-BM-font-putih.png" alt="Logo KPM" class="h-12 sm:h-16 w-auto" onerror="this.src=''; this.alt='Logo failed to load'; this.style.display='none';">
+                        <img src="https://i.postimg.cc/5NQfLBqP/TS25-AI-01.png" alt="Logo TS25" class="h-12 sm:h-16 w-auto" onerror="this.src=''; this.alt='Logo failed to load'; this.style.display='none';">
+                    </div>
+                    <div class="text-center">
+                        <h1 class="text-lg sm:text-xl font-bold">SMA Al-Khairiah Al-Islamiah Mersing</h1>
+                        <p class="text-xs sm:text-sm mt-1">49/3, Jalan Awang Daik, 86800 Mersing Johor</p>
+                        <p class="text-xs sm:text-sm">Tel: 07-7996272</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="max-w-2xl mx-auto px-4 pt-8 sm:pt-12">
+                <div id="menuBilik" class="flex flex-col sm:flex-row gap-2 sm:space-x-2 bg-gray-200 p-1 rounded-lg">
+                    <button id="btn-bilik-ujian" onclick="showParentTab('bilik')" class="parent-tab-btn w-full py-2 px-4 rounded-md font-medium transition-all">
+                        Bilik Ujian Murid
+                    </button>
+                    <button id="btn-carian-keputusan" onclick="showParentTab('carian')" class="parent-tab-btn w-full py-2 px-4 rounded-md font-medium transition-all">
+                        Keputusan Ujian Kelayakan
+                    </button>
+                </div>
+            </div>
+            
+            <div id="bilik-ujian-content" class="parent-tab-content hidden">
+                <div class="max-w-2xl mx-auto px-4 py-8 sm:py-12">
+                    <div class="bg-white rounded-lg shadow-lg p-4 sm:p-8">
+                        <h2 class="text-2xl sm:text-3xl font-bold text-navy mb-6 text-center">Bilik Ujian Murid</h2>
+                        <div class="flex flex-col sm:flex-row gap-2 bg-gray-100 p-1 rounded-lg mb-8">
+                            <button id="btn-senarai-bilik" onclick="showBilikUjianTab('senarai')" class="bilik-ujian-tab-btn w-full py-2 px-4 rounded-md font-medium transition-all">Senarai Mengikut Bilik</button>
+                            <button id="btn-semak-nama" onclick="showBilikUjianTab('semak')" class="bilik-ujian-tab-btn w-full py-2 px-4 rounded-md font-medium transition-all">Semak Nama Murid</button>
+                        </div>
+                        <div id="senarai-bilik-content" class="bilik-ujian-tab-content">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Senarai Murid Mengikut Bilik Ujian</h3>
+                            <p class="text-gray-600 mb-6">Sila pilih bilik untuk memaparkan senarai nama calon.</p>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Bilik Ujian</label>
+                                    <select id="parent-room-select" onchange="displayStudentsByRoom()" class="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-navy focus:border-transparent"></select>
+                                </div>
+                                <div id="student-list-display" class="mt-6 p-4 bg-gray-50 rounded-lg min-h-[10rem]"><p class="text-center text-gray-500">Senarai murid akan dipaparkan di sini.</p></div>
+                            </div>
+                        </div>
+                        <div id="semak-nama-content" class="bilik-ujian-tab-content hidden">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Semak Bilik Ujian Murid</h3>
+                            <p class="text-gray-600 mb-6">Masukkan Nombor Kad Pengenalan calon untuk menyemak bilik ujian.</p>
+                            <form onsubmit="checkStudentRegistration(event)" class="space-y-6">
+                                <div>
+                                    <label for="parent-check-ic" class="block text-sm font-medium text-gray-700 mb-2">NO. KAD PENGENALAN</label>
+                                    <input type="text" id="parent-check-ic" class="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-navy focus:border-transparent" placeholder="Contoh: 123456789012 (tanpa sengkang)" required>
+                                </div>
+                                <button type="submit" class="w-full bg-navy text-white py-3 px-6 rounded-md hover:bg-navy-dark transition-colors font-medium">Cari</button>
+                            </form>
+                            <div id="student-check-display" class="mt-6 p-4 bg-gray-50 rounded-lg min-h-[5rem]"><p class="text-center text-gray-500">Hasil carian akan dipaparkan di sini.</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="carian-keputusan-content" class="parent-tab-content hidden">
+                <div class="max-w-2xl mx-auto px-4 py-8 sm:py-12">
+                    <div class="bg-white rounded-lg shadow-lg p-4 sm:p-8">
+                        <h2 class="text-2xl sm:text-3xl font-bold text-navy mb-2 text-center">Carian Keputusan</h2>
+                        <p class="text-gray-600 mb-8 text-center">Semak keputusan ujian kelayakan anda dengan mudah</p>
+                        <form onsubmit="searchStudent(event)" class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Masukkan nombor kad pengenalan anda tanpa tanda ' - '</label>
+                                <input type="text" id="parent-ic" class="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-navy focus:border-transparent" placeholder="Contoh: 123456789012" required>
+                            </div>
+                            <button type="submit" class="w-full bg-navy text-white py-3 px-6 rounded-md hover:bg-navy-dark transition-colors font-medium">Cari Keputusan</button>
+                        </form>
+                    </div>
+                </div>
+                <div id="student-results" class="hidden max-w-4xl mx-auto px-4 pb-12">
+                    <div class="bg-white rounded-lg shadow-lg p-4 sm:p-8">
+                        <div class="text-center mb-6">
+                            <h3 class="text-xl sm:text-2xl font-bold text-navy">KEPUTUSAN UJIAN KELAYAKAN KE TINGKATAN SATU</h3>
+                            <p class="text-base sm:text-lg font-semibold text-gray-700 mt-1">SMA AL-KHAIRIAH AL-ISLAMIAH MERSING</p>
+                        </div>
+                        <div id="student-info" class="mb-6 font-semibold"></div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full border-collapse border border-gray-300 min-w-[600px]">
+                                <thead class="bg-navy text-white">
+                                    <tr>
+                                        <th class="border border-gray-300 px-4 py-3 text-left">SUBJEK</th>
+                                        <th class="border border-gray-300 px-4 py-3 text-center">MARKAH PENUH</th>
+                                        <th class="border border-gray-300 px-4 py-3 text-center">MARKAH DIPEROLEHI</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="marks-table"></tbody>
+                            </table>
+                        </div>
+                        <div id="total-results" class="mt-6 p-4 bg-gray-50 rounded-lg"></div>
+                        <div id="final-decision" class="hidden mt-8"></div>
+                    </div>
+                </div>
+                <div id="not-found" class="hidden max-w-2xl mx-auto px-4 pb-12">
+                    <div class="bg-white rounded-lg shadow-lg p-4 sm:p-8 text-center">
+                        <div class="text-red-500 text-6xl mb-4">⚠️</div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Rekod Tidak Dijumpai</h3>
+                        <p class="text-gray-600 mb-6">Sila semak semula NO. KP yang dimasukkan.</p>
+                        <a href="#" onclick="resetSearch()" class="text-navy hover:underline">Cuba Lagi</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="murid-section" class="section hidden">
+            <div class="max-w-md mx-auto px-4 py-12 sm:py-24">
+                <div class="bg-white rounded-lg shadow-lg p-4 sm:p-8">
+                    <h2 class="text-2xl sm:text-3xl font-bold text-navy mb-6 text-center">Log Masuk Murid</h2>
+                    <form onsubmit="handleMuridLogin(event)">
+                        <div class="mb-4">
+                            <label for="murid-username" class="block text-sm font-medium text-gray-700 mb-2">Nama Pengguna</label>
+                            <input type="text" id="murid-username" class="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-navy focus:border-transparent" required>
+                        </div>
+                        <div class="mb-6">
+                            <label for="murid-password" class="block text-sm font-medium text-gray-700 mb-2">Kata Laluan</label>
+                            <input type="password" id="murid-password" class="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-navy focus:border-transparent" required>
+                        </div>
+                        <button type="submit" class="w-full bg-navy text-white py-3 px-6 rounded-md hover:bg-navy-dark transition-colors font-medium">Log Masuk</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div id="teacher-section" class="section hidden">
+            <div class="max-w-7xl mx-auto px-4 py-4 sm:py-8">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+                    <h2 class="text-2xl sm:text-3xl font-bold text-navy uppercase">PANEL GURU</h2>
+                    <span id="teacher-current-room" class="bg-pink-200 text-pink-800 text-lg sm:text-xl font-bold px-4 py-1 rounded-md"></span>
+                </div>
+                <div id="teacher-main-view">
+                    <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-8 hidden">
+                        <label for="room-select" class="block text-sm font-medium text-gray-700 mb-2">Pilih Bilik Secara Manual</label>
+                        <select id="room-select" onchange="loadRoomData()" class="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-navy"><option value="">-- Pilih Bilik --</option></select>
+                    </div>
+                    <div id="room-summary-cards" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 mb-8"></div>
+                </div>
+                <div id="teacher-controls" class="hidden">
+                    <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-8">
+                        <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+                            <div class="flex flex-wrap gap-2 sm:gap-4 items-center">
+                                <button onclick="goBackToRoomCards()" class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-colors flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                                    Kembali
+                                </button>
+                            </div>
+                            <input type="text" id="teacher-search" placeholder="Cari nama atau NO. KP..." class="px-4 py-2 border border-gray-300 rounded-md w-full md:w-64" oninput="filterTeacherTable()">
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                        <div class="teacher-table-wrapper">
+                            <table class="w-full table-auto">
+                                <thead class="bg-navy text-white text-sm">
+                                    <tr>
+                                        <th class="px-2 py-3 w-6"></th>
+                                        <th class="px-2 py-3 text-left w-10">BIL</th>
+                                        <th class="px-2 py-3 text-left w-48">NAMA</th>
+                                        <th class="px-2 py-3 text-left w-36">NO. KP</th>
+                                        <th class="px-2 py-3 text-center w-12">BM (30)</th>
+                                        <th class="px-2 py-3 text-center w-12">BI (20)</th>
+                                        <th class="px-2 py-3 text-center w-12">BA (30)</th>
+                                        <th class="px-2 py-3 text-center w-12">MAT (20)</th>
+                                        <th class="px-2 py-3 text-center w-20">UPKK</th>
+                                        <th class="px-2 py-3 text-center w-12">QURAN (10)</th>
+                                        <th class="px-2 py-3 text-center w-12">HAFAZAN (10)</th>
+                                        <th class="px-2 py-3 text-center w-12">PAJSK (10)</th>
+                                        <th class="px-2 py-3 text-center w-16">JUMLAH</th>
+                                        <th class="px-2 py-3 text-center w-16">%</th>
+                                        <th class="px-2 py-3 text-center w-20">SIMPAN</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="teacher-table-body"></tbody>
+                            </table>
+                        </div>
+                        <div class="bg-gray-50 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div class="text-sm text-gray-700">Menunjukkan <span id="showing-start">1</span> hingga <span id="showing-end">20</span> daripada <span id="total-records">0</span> rekod</div>
+                            <div class="flex gap-2">
+                                <button onclick="previousPage()" id="prev-btn" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50">Sebelum</button>
+                                <button onclick="nextPage()" id="next-btn" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50">Seterusnya</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="admin-section" class="section hidden">
+            <div class="w-full px-4 sm:px-6 lg:px-8 py-8">
+                <div class="grid grid-cols-1 lg:grid-cols-6 gap-6">
+                    <aside class="lg:col-span-1">
+                        <div class="space-y-6">
+                            <div class="bg-admin-menu text-white p-4 rounded-lg text-center shadow-lg">
+                               <h3 class="font-bold text-lg border-b border-gray-500 pb-2 mb-4">PROFIL</h3>
+                               <img src="https://i.postimg.cc/h428bbdW/smaam-background-BARU.png" alt="Logo Sekolah" class="h-16 w-auto mx-auto mb-4">
+                               <p class="font-bold text-sm leading-tight">SEK. MEN. AGAMA<br>AL-KHAIRIAH AL-ISLAMIAH MERSING</p>
+                            </div>
+                            <div class="bg-admin-menu text-white p-4 rounded-lg shadow-lg">
+                               <h3 class="font-bold text-lg mb-4 text-center border-b border-gray-500 pb-2">MENU</h3>
+                               <nav class="space-y-2">
+                                    <a href="#" onclick="showAdminPanel('pendaftaran'); return false;" class="block py-2 px-3 rounded-md hover:bg-navy-light transition-colors">PENDAFTARAN</a>
+                                    <a href="#" onclick="showAdminPanel('data'); showRanking(); return false;" class="block py-2 px-3 rounded-md hover:bg-navy-light transition-colors">KEPUTUSAN IKUT GRED</a>
+                                    <a href="#" onclick="showAdminPanel('data'); showResults(); return false;" class="block py-2 px-3 rounded-md hover:bg-navy-light transition-colors">KEPUTUSAN AKHIR</a>
+                                    <a href="#" onclick="sendWhatsAppMessage(); return false;" class="block py-2 px-3 rounded-md hover:bg-navy-light transition-colors">HANTAR WHATSAPP</a>
+                               </nav>
+                            </div>
+                            <div class="bg-admin-menu text-white p-4 rounded-lg shadow-lg">
+                                <h3 class="text-lg font-bold text-white mb-4 border-b border-gray-500 pb-2">PAPARAN IBU BAPA</h3>
+                                <div class="space-y-4">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-medium text-gray-300 text-sm">Bilik Ujian Murid</span>
+                                        <button type="button" id="toggle-bilikUjian" onclick="toggleParentView(this, 'bilikUjian')" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-gray-200 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-navy focus:ring-offset-2" role="switch" aria-checked="false">
+                                            <span aria-hidden="true" class="pointer-events-none inline-block h-5 w-5 translate-x-0 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                                        </button>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-medium text-gray-300 text-sm">Carian Keputusan</span>
+                                        <button type="button" id="toggle-carianKeputusan" onclick="toggleParentView(this, 'carianKeputusan')" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-gray-200 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-navy focus:ring-offset-2" role="switch" aria-checked="false">
+                                            <span aria-hidden="true" class="pointer-events-none inline-block h-5 w-5 translate-x-0 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+                    <main class="lg:col-span-5">
+                        <div id="admin-panel-data" class="admin-main-panel space-y-8">
+                            <div id="admin-data-title-container" class="hidden justify-between items-center border-b pb-4">
+                                <h3 id="admin-data-title" class="text-2xl font-bold text-navy"></h3>
+                            </div>
+                            <div id="akhir-summary-cards" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div onclick="showAdminFilteredTable('action', 'DITERIMA', 'KEPUTUSAN: DITERIMA')" class="bg-green-100 rounded-lg p-4 text-center shadow-md flex flex-col justify-between cursor-pointer hover:shadow-xl hover:scale-105 transition-transform">
+                                    <div class="text-green-800 font-bold">DITERIMA</div>
+                                    <div class="text-sm text-green-700 my-1">L <span id="diterima-lelaki">0</span> | P <span id="diterima-perempuan">0</span></div>
+                                    <div class="text-4xl font-extrabold text-green-600" id="diterima-count">0</div>
+                                </div>
+                                <div onclick="showAdminFilteredTable('action', 'DITOLAK', 'KEPUTUSAN: DITOLAK')" class="bg-red-100 rounded-lg p-4 text-center shadow-md flex flex-col justify-between cursor-pointer hover:shadow-xl hover:scale-105 transition-transform">
+                                    <div class="text-red-800 font-bold">DITOLAK</div>
+                                    <div class="text-sm text-red-700 my-1">L <span id="ditolak-lelaki">0</span> | P <span id="ditolak-perempuan">0</span></div>
+                                    <div class="text-4xl font-extrabold text-red-600" id="ditolak-count">0</div>
+                                </div>
+                                <div onclick="showAdminFilteredTable('action', 'RAYUAN', 'KEPUTUSAN: RAYUAN')" class="bg-yellow-100 rounded-lg p-4 text-center shadow-md flex flex-col justify-between cursor-pointer hover:shadow-xl hover:scale-105 transition-transform">
+                                    <div class="text-yellow-800 font-bold">RAYUAN</div>
+                                    <div class="text-sm text-yellow-700 my-1">L <span id="rayuan-lelaki">0</span> | P <span id="rayuan-perempuan">0</span></div>
+                                    <div class="text-4xl font-extrabold text-yellow-600" id="rayuan-count">0</div>
+                                </div>
+                                <div class="bg-gray-200 rounded-lg p-4 text-center shadow-md flex flex-col justify-between">
+                                    <div class="text-gray-800 font-bold">JUMLAH</div>
+                                    <div class="text-sm text-gray-700 my-1">L <span id="total-lelaki">0</span> | P <span id="total-perempuan">0</span></div>
+                                    <div class="text-4xl font-extrabold text-gray-600" id="total-students">0</div>
+                                </div>
+                            </div>
+                            <div id="gred-summary-cards" class="hidden grid grid-cols-2 lg:grid-cols-5 gap-4">
+                                <div onclick="showAdminFilteredTable('status', 'CEMERLANG', 'SENARAI CEMERLANG')" class="bg-green-100 rounded-lg p-4 text-center shadow-md flex flex-col justify-between cursor-pointer hover:shadow-xl hover:scale-105 transition-transform">
+                                    <div class="text-green-800 font-bold">CEMERLANG</div>
+                                    <div class="text-sm text-green-700 my-1">L <span id="cemerlang-lelaki">0</span> | P <span id="cemerlang-perempuan">0</span></div>
+                                    <div class="text-4xl font-extrabold text-green-600" id="cemerlang-count">0</div>
+                                </div>
+                                <div onclick="showAdminFilteredTable('status', 'BAIK', 'SENARAI BAIK')" class="bg-blue-100 rounded-lg p-4 text-center shadow-md flex flex-col justify-between cursor-pointer hover:shadow-xl hover:scale-105 transition-transform">
+                                    <div class="text-blue-800 font-bold">BAIK</div>
+                                    <div class="text-sm text-blue-700 my-1">L <span id="baik-lelaki">0</span> | P <span id="baik-perempuan">0</span></div>
+                                    <div class="text-4xl font-extrabold text-blue-600" id="baik-count">0</div>
+                                </div>
+                                <div onclick="showAdminFilteredTable('status', 'LULUS', 'SENARAI LULUS')" class="bg-yellow-100 rounded-lg p-4 text-center shadow-md flex flex-col justify-between cursor-pointer hover:shadow-xl hover:scale-105 transition-transform">
+                                    <div class="text-yellow-800 font-bold">LULUS</div>
+                                    <div class="text-sm text-yellow-700 my-1">L <span id="lulus-lelaki">0</span> | P <span id="lulus-perempuan">0</span></div>
+                                    <div class="text-4xl font-extrabold text-yellow-600" id="lulus-count">0</div>
+                                </div>
+                                <div onclick="showAdminFilteredTable('status', 'GAGAL', 'SENARAI GAGAL')" class="bg-red-100 rounded-lg p-4 text-center shadow-md flex flex-col justify-between cursor-pointer hover:shadow-xl hover:scale-105 transition-transform">
+                                    <div class="text-red-800 font-bold">GAGAL</div>
+                                    <div class="text-sm text-red-700 my-1">L <span id="gagal-lelaki">0</span> | P <span id="gagal-perempuan">0</span></div>
+                                    <div class="text-4xl font-extrabold text-red-600" id="gagal-count">0</div>
+                                </div>
+                                <div class="bg-gray-200 rounded-lg p-4 text-center shadow-md flex flex-col justify-between col-span-2 lg:col-span-1">
+                                    <div class="text-gray-800 font-bold">JUMLAH</div>
+                                    <div class="text-sm text-gray-700 my-1">L <span id="total-lelaki-gred">0</span> | P <span id="total-perempuan-gred">0</span></div>
+                                    <div class="text-4xl font-extrabold text-gray-600" id="total-students-gred">0</div>
+                                </div>
+                            </div>
+                            <div class="bg-blue-50 border-l-4 border-blue-400 p-4"><div class="flex"><div class="flex-shrink-0"><svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg></div><div class="ml-3"><h3 class="text-sm font-medium text-blue-800">Status Automatik (berdasarkan markah):</h3><div class="mt-2 text-sm text-blue-700"><div class="grid grid-cols-1 md:grid-cols-2 gap-2"><div>🟢 <strong>CEMERLANG:</strong> Peratus ≥80%, Al-Quran ≥9, Matematik ≥15</div><div>🔵 <strong>BAIK:</strong> Peratus ≥60%, Al-Quran ≥7, Matematik ≥10</div><div>🟡 <strong>LULUS:</strong> Peratus ≥50%, Al-Quran ≥5, Matematik ≥7</div><div>🔴 <strong>GAGAL:</strong> Kurang daripada kriteria LULUS</div></div><p class="mt-2 text-xs italic">Kolum Tindakan boleh dipilih secara manual oleh guru untuk keputusan akhir.</p></div></div></div></div>
+                            
+                            <div id="admin-table-area" class="hidden space-y-8">
+                                <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+                                    <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
+                                        <h3 id="admin-table-heading" class="text-xl font-bold text-navy w-full lg:w-auto text-center lg:text-left"></h3>
+                                        <div class="flex flex-col sm:flex-row gap-4 items-center w-full lg:w-auto">
+                                            <div class="flex gap-2 items-center">
+                                                <label class="text-sm font-medium text-gray-700">Susun ikut:</label>
+                                                <select id="ranking-subject" onchange="renderFilteredAdminTable()" class="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-navy w-full sm:w-auto">
+                                                    <option value="total">Jumlah/Peratus</option><option value="bm">BM</option><option value="bi">BI</option><option value="ba">BA</option><option value="math">Matematik</option><option value="upkk">UPKK</option><option value="quran">Al-Quran</option><option value="hafazan">Hafazan</option><option value="pajsk">PAJSK</option>
+                                                </select>
+                                            </div>
+                                            <input type="text" id="admin-search" placeholder="Cari nama atau NO. KP..." class="px-4 py-2 border border-gray-300 rounded-md w-full lg:w-64" oninput="renderFilteredAdminTable()">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                                    <div class="admin-table-wrapper">
+                                        <table class="w-full">
+                                            <thead class="bg-navy text-white text-xs sm:text-sm">
+                                                <tr>
+                                                    <th class="px-2 py-3 w-6"></th> 
+                                                    <th class="px-2 py-3 text-left w-10">BIL</th>
+                                                    <th class="px-3 py-3 text-left w-36">NAMA</th>
+                                                    <th class="px-3 py-3 text-left w-24">NO. KP</th>
+                                                    <th class="px-2 py-3 text-center w-12">BM (30)</th>
+                                                    <th class="px-2 py-3 text-center w-12">BI (20)</th>
+                                                    <th class="px-2 py-3 text-center w-12">BA (30)</th>
+                                                    <th class="px-2 py-3 text-center w-12">MAT (20)</th>
+                                                    <th class="px-2 py-3 text-center w-20">UPKK</th>
+                                                    <th class="px-2 py-3 text-center w-12">QURAN (10)</th>
+                                                    <th class="px-2 py-3 text-center w-12">HAFAZAN (10)</th>
+                                                    <th class="px-2 py-3 text-center w-12">PAJSK (10)</th>
+                                                    <th class="px-2 py-3 text-center w-16">JUMLAH</th>
+                                                    <th class="px-2 py-3 text-center w-16">%</th>
+                                                    <th class="px-2 py-3 text-center w-20">STATUS</th>
+                                                    <th class="px-2 py-3 text-center w-20">TINDAKAN</th>
+                                                    <th class="px-2 py-3 text-center w-16">SIMPAN</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="admin-table-body"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="admin-panel-pendaftaran" class="admin-main-panel hidden">
+                            <div class="bg-white rounded-lg shadow-lg p-4 sm:p-8">
+                                <div class="flex justify-between items-center mb-6 border-b pb-4">
+                                    <h3 class="text-2xl font-bold text-navy">Pendaftaran Calon Baru</h3>
+                                </div>
+                                <div id="registration-summary-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-8 gap-3 mb-8">
+                                </div>
+                                <div class="flex flex-col lg:flex-row justify-between items-start mb-6 gap-4">
+                                    <div class="flex flex-col sm:flex-row items-center flex-wrap gap-4 w-full lg:w-auto">
+                                        <div class="flex flex-row gap-3 w-full sm:w-auto">
+                                            <button onclick="addRegistrationRow()" class="bg-green-600 text-white px-5 py-2 rounded-md hover:bg-green-700 transition-colors font-semibold flex-1 sm:flex-none">Tambah Baris</button>
+                                            <button id="save-changes-btn" onclick="saveAllRegistrationChanges(this)" class="bg-navy text-white px-5 py-2 rounded-md hover:bg-navy-dark transition-colors font-semibold flex-1 sm:flex-none">Simpan</button>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-wrap gap-4 text-center w-full lg:w-auto">
+                                        <div class="bg-blue-100 p-3 rounded-lg flex-grow">
+                                            <div class="text-2xl font-bold text-blue-600" id="male-count-display">0</div>
+                                            <div class="text-sm font-medium text-blue-800">JUMLAH LELAKI</div>
+                                        </div>
+                                        <div class="bg-pink-100 p-3 rounded-lg flex-grow">
+                                            <div class="text-2xl font-bold text-pink-600" id="female-count-display">0</div>
+                                            <div class="text-sm font-medium text-pink-800">JUMLAH PEREMPUAN</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="overflow-x-auto border rounded-lg">
+                                    <table id="registration-table" class="w-full text-sm min-w-[1000px]">
+                                        <thead class="bg-navy text-white">
+                                            <tr>
+                                                <th class="px-4 py-3 text-left font-medium w-12">BIL</th>
+                                                <th class="px-4 py-3 text-left font-medium cursor-pointer hover:bg-navy-light" onclick="sortRegistrationTable('name')" data-sort-key="name">NAMA MURID<span class="sort-arrow"></span></th>
+                                                <th class="px-4 py-3 text-left font-medium cursor-pointer hover:bg-navy-light w-40" onclick="sortRegistrationTable('ic')" data-sort-key="ic">NO. KAD PENGENALAN<span class="sort-arrow"></span></th>
+                                                <th class="px-4 py-3 text-left font-medium cursor-pointer hover:bg-navy-light" onclick="sortRegistrationTable('address')" data-sort-key="address">ALAMAT RINGKAS<span class="sort-arrow"></span></th>
+                                                <th class="px-4 py-3 text-left font-medium cursor-pointer hover:bg-navy-light w-36" onclick="sortRegistrationTable('room')" data-sort-key="room">BILIK UJIAN<span class="sort-arrow"></span></th>
+                                                <th class="px-4 py-3 text-left font-medium cursor-pointer hover:bg-navy-light w-36" onclick="sortRegistrationTable('gender')" data-sort-key="gender">JANTINA<span class="sort-arrow"></span></th>
+                                                <th class="px-4 py-3 text-center font-medium w-24">HAPUS</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="registration-table-body"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+        </div>
+        <footer class="bg-navy text-white py-8 mt-16">
+            <div class="max-w-7xl mx-auto px-4 text-center">
+                <h3 class="text-xl font-bold mb-2">SMA Al-Khairiah Al-Islamiah Mersing</h3>
+                <p class="text-gray-300 mb-4">Portal Ujian Kelayakan Tingkatan Satu</p>
+                <p class="text-sm text-gray-400">© 2025 Hak Cipta Terpelihara. Sistem Pengurusan Ujian Kelayakan</p>
+            </div>
+        </footer>
+    </div>
+	
+    <div id="ujian-section" class="hidden fixed inset-0 flex flex-col bg-white overflow-y-auto z-50">
+        <div class="bg-navy text-white p-4 flex justify-between items-center flex-shrink-0 sticky top-0 z-10">
+            <h2 class="text-lg font-bold">Ujian Sedang Berlangsung</h2>
+            <button onclick="logoutUjian()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">Log Keluar</button>
+        </div>
+        
+        <div id="ujian-container-inner" class="flex-grow w-full">
+            <div class="main-container">
+                <div class="background-overlay"></div>
+                <div class="header">
+                    <div class="logos">
+                        <img src="https://i.postimg.cc/9fd8BWWM/smaam-background-BARU.png" alt="Logo SMAAM">
+                        <img src="https://i.postimg.cc/6pst08MB/Logo-KPM-BM-font-hitam.png" alt="Logo KPM">
+                        <img src="https://i.postimg.cc/5NQfLBqP/TS25-AI-01.png" alt="Logo TS25">
+                    </div>
+                </div>
+
+                <div class="content">
+                    <!-- Start Page -->
+                    <div id="start-page">
+                        <h1>Ujian Kelayakan Kemasukan Tingkatan 1</h1>
+                        <h2>SMA Al-Khairiah Al-Islamiah Mersing</h2>
+                        
+                        <div class="form-group">
+                            <label for="student-name">Nama Murid</label>
+                            <input type="text" id="student-name" placeholder="Tulis nama penuh, contoh Ali bin Abu">
+                        </div>
+                        <div class="form-group">
+                            <label for="student-ic">Nombor Kad Pengenalan</label>
+                            <input type="text" id="student-ic" placeholder="12 Nombor tanpa -">
+                        </div>
+                        <div class="form-group">
+                            <label for="student-address">Alamat Ringkas</label>
+                            <input type="text" id="student-address" placeholder="Nama daerah dan negeri, contoh: Mersing, Johor">
+                        </div>
+                        <div class="form-group">
+                            <label for="student-upkk">Keputusan UPKK</label>
+                            <input type="text" id="student-upkk" placeholder="Contoh 5A 2B">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="student-room">Bilik Ujian</label>
+                            <select id="student-room">
+                                <option value="" disabled selected>Sila Pilih Bilik</option>
+                                <option value="Bilik 1">Bilik 1</option>
+                                <option value="Bilik 2">Bilik 2</option>
+                                <option value="Bilik 3">Bilik 3</option>
+                                <option value="Bilik 4">Bilik 4</option>
+                                <option value="Bilik 5">Bilik 5</option>
+                                <option value="Bilik 6">Bilik 6</option>
+                                <option value="Bilik 7">Bilik 7</option>
+                                <option value="Bilik 8">Bilik 8</option>
+                                <option value="Bilik 9">Bilik 9</option>
+                                <option value="Bilik 10">Bilik 10</option>
+                                <option value="Bilik 11">Bilik 11</option>
+                                <option value="Bilik 12">Bilik 12</option>
+                                <option value="Bilik 13">Bilik 13</option>
+                                <option value="Bilik 14">Bilik 14</option>
+                                <option value="Bilik 15">Bilik 15</option>
+                            </select>
+                        </div>
+
+                        <div class="instructions">
+                            <p><strong>Arahan Penting:</strong></p>
+                            <ul>
+                                <li>Masa ujian: <strong>90 minit</strong> untuk kesemua mata pelajaran.</li>
+                                <li>Masa menjawab anda akan mula berjalan setelah anda menekan 'Mula Ujian'.</li>
+                                <li>Jawab semua soalan dengan teliti.</li>
+                                <li>Anda boleh kembali ke soalan yang telah dijawab selagi belum dihantar.</li>
+                                <li>Setelah mata pelajaran dihantar, mata pelajaran tersebut akan <strong>dikunci</strong> dan tidak boleh diubah.</li>
+                            </ul>
+                        </div>
+                        <button class="start-btn" onclick="startTest()">Mula Ujian</button>
+                    </div>
+
+                    <!-- Test Page -->
+                    <div id="test-page">
+                        <div class="test-header">
+                            <h2>Sila jawab semua soalan</h2>
+                            <div id="timer">90:00</div>
+                        </div>
+
+                        <div class="subject-tabs">
+                            <button class="tab active" data-subject="bm" onclick="showSubject('bm')">Bahasa Melayu <span id="bm-lock"></span></button>
+                            <button class="tab" data-subject="bi" onclick="showSubject('bi')">Bahasa Inggeris <span id="bi-lock"></span></button>
+                            <button class="tab" data-subject="ba" onclick="showSubject('ba')">Bahasa Arab <span id="ba-lock"></span></button>
+                            <button class="tab" data-subject="mt" onclick="showSubject('mt')">Matematik <span id="mt-lock"></span></button>
+                        </div>
+                        
+                        <div id="progress-bar-container">
+                            <div id="progress-bar"></div>
+                        </div>
+
+                        <div class="question-area">
+                            <!-- Questions will be loaded here by JavaScript -->
+                        </div>
+
+                        <div class="navigation-buttons">
+                            <button class="nav-btn" id="prev-btn-test" onclick="prevQuestion()">Sebelumnya</button>
+                            <span id="question-counter"></span>
+                            <button class="nav-btn" id="next-btn-test" onclick="nextQuestion()">Seterusnya</button>
+                        </div>
+                        <button class="submit-btn" id="submit-subject-btn" style="width: 100%; margin-top: 20px;">Hantar Mata Pelajaran</button>
+                    </div>
+
+                <!-- Results Page -->
+                    <div id="results-page">
+                        <h2>Keputusan Ujian Kelayakan Tingkatan 1</h2>
+                        <div id="student-info-summary"></div>
+                        <div id="results-summary"></div>
+                        <div class="final-note">
+                            <p>Pihak sekolah akan menghubungi anda untuk keputusan penuh. Terima kasih.</p>
+                            <p id="submission-status"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center px-4"><div class="bg-white rounded-lg p-8 max-w-md w-full"><h3 class="text-2xl font-bold text-navy mb-6 text-center">Log Masuk</h3><form onsubmit="handleLogin(event)"><div class="mb-4"><label class="block text-sm font-medium text-gray-700 mb-2">Nama Pengguna</label><input type="text" id="username" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-navy" required></div><div class="mb-6"><label class="block text-sm font-medium text-gray-700 mb-2">Kata Laluan</label><input type="password" id="password" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-navy" required></div><div class="flex gap-4"><button type="button" onclick="closeLogin()" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 transition-colors">Batal</button><button type="submit" class="flex-1 bg-navy text-white py-2 px-4 rounded-md hover:bg-navy-dark transition-colors">Log Masuk</button></div></form></div></div>
+    
+    <script>
+        // ===================================================================================
+        // SELURUH KOD JAVASCRIPT ADA DI BAWAH INI
+        // ===================================================================================
+
+        const GOOGLE_APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxz2igL3xt6b2pOofpdmI2aBOy3Klcm3MB6GEQKc7chUd7rP7tJfsrxqfJV5G3Ld1kW/exec"; 
+        const GOOGLE_APP_SCRIPT_URL_UJIAN = "https://script.google.com/macros/s/AKfycbw6TIFueo7eb88ZMH0a4Nhu1HhWqL7cTSy8w5A4CSmccqXjaY7KeCy5I1XOqLEL6MPoTg/exec"; // URL UNTUK HANTAR KEPUTUSAN
+        
+        let currentSection = 'parent';
+        let currentUser = null;
+        let studentsData = [];
+        let currentPage = 1;
+        let recordsPerPage = 20;
+        let currentRoom = '';
+        let registrationSortConfig = { key: 'name', direction: 'ascending' };
+        let unsavedChanges = {}; 
+        let currentRegistrationFilter = 'semua';
+        let currentAdminFilter = { key: null, value: null, title: null };
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const hash = window.location.hash.substring(1);
+            const validSections = ['parent', 'murid', 'teacher', 'admin'];
+            let initialSection = 'parent';
+            if (hash && validSections.includes(hash)) {
+                initialSection = hash;
+            }
+            showSection(initialSection, true); 
+
+            const activeParentTab = sessionStorage.getItem('activeParentTab');
+            if (activeParentTab) {
+                showParentTab(activeParentTab);
+            } else {
+                showParentTab('bilik');
+            }
+
+            const activeBilikTab = sessionStorage.getItem('activeBilikUjianTab');
+            if (activeBilikTab) {
+                showBilikUjianTab(activeBilikTab);
+            } else {
+                showBilikUjianTab('senarai');
+            }
+            
+            const activeAdminPanel = sessionStorage.getItem('activeAdminPanel');
+            if (activeAdminPanel) {
+                showAdminPanel(activeAdminPanel);
+            }
+        
+            populateRoomSelectors();
+            loadFromGoogleSheets(); 
+
+            setInterval(() => {
+                loadFromGoogleSheets(true); 
+            }, 30000);
+            
+            initializeUserAnswers(); // Inisialisasi data ujian
+        });
+        
+        // ##### PERUBAHAN: Kini menggunakan `uniqueId` sebagai kunci #####
+        function markAsChanged(uniqueId) {
+            unsavedChanges[uniqueId] = true;
+        }
+        
+        function showParentTab(tabName) {
+            sessionStorage.setItem('activeParentTab', tabName); 
+            document.querySelectorAll('.parent-tab-content').forEach(content => content.classList.add('hidden'));
+            const buttons = document.querySelectorAll('.parent-tab-btn');
+            
+            buttons.forEach(btn => {
+                btn.classList.remove('bg-navy-light', 'text-white');
+                btn.classList.add('bg-white', 'text-navy', 'shadow-sm', 'hover:bg-gray-100');
+            });
+        
+            if (tabName === 'bilik') {
+                document.getElementById('bilik-ujian-content').classList.remove('hidden');
+                document.getElementById('btn-bilik-ujian').classList.add('bg-navy-light', 'text-white');
+                document.getElementById('btn-bilik-ujian').classList.remove('bg-white', 'text-navy', 'shadow-sm', 'hover:bg-gray-100');
+            } else if (tabName === 'carian') {
+                document.getElementById('carian-keputusan-content').classList.remove('hidden');
+                document.getElementById('btn-carian-keputusan').classList.add('bg-navy-light', 'text-white');
+                document.getElementById('btn-carian-keputusan').classList.remove('bg-white', 'text-navy', 'shadow-sm', 'hover:bg-gray-100');
+            }
+        }
+
+        function showBilikUjianTab(tabName) {
+            sessionStorage.setItem('activeBilikUjianTab', tabName);
+            document.querySelectorAll('.bilik-ujian-tab-content').forEach(content => content.classList.add('hidden'));
+            const buttons = document.querySelectorAll('.bilik-ujian-tab-btn');
+            
+            buttons.forEach(btn => {
+                btn.classList.remove('bg-blue-200', 'text-blue-800', 'font-bold');
+                btn.classList.add('text-gray-600', 'hover:bg-gray-200');
+            });
+
+            if (tabName === 'senarai') {
+                document.getElementById('senarai-bilik-content').classList.remove('hidden');
+                document.getElementById('btn-senarai-bilik').classList.add('bg-blue-200', 'text-blue-800', 'font-bold');
+                document.getElementById('btn-senarai-bilik').classList.remove('text-gray-600', 'hover:bg-gray-200');
+            } else if (tabName === 'semak') {
+                document.getElementById('semak-nama-content').classList.remove('hidden');
+                document.getElementById('btn-semak-nama').classList.add('bg-blue-200', 'text-blue-800', 'font-bold');
+                document.getElementById('btn-semak-nama').classList.remove('text-gray-600', 'hover:bg-gray-200');
+            }
+        }
+
+        function showSection(sectionName, isInitialLoad = false) {
+            if (!isInitialLoad) {
+                window.location.hash = sectionName;
+            }
+            document.querySelectorAll('.section').forEach(sec => sec.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('bg-navy-light'));
+
+            if (sectionName === 'parent') {
+                document.getElementById('parent-section').classList.remove('hidden');
+                document.getElementById('nav-parent').classList.add('bg-navy-light');
+                currentSection = 'parent';
+                applyParentViewSettings(); 
+            } else if (sectionName === 'murid') {
+                document.getElementById('murid-section').classList.remove('hidden');
+                document.getElementById('nav-murid').classList.add('bg-navy-light');
+                currentSection = 'murid';
+            } else if (sectionName === 'teacher') {
+                if (currentUser && currentUser.role === 'teacher') {
+                    document.getElementById('teacher-section').classList.remove('hidden');
+                    document.getElementById('nav-teacher').classList.add('bg-navy-light');
+                    currentSection = 'teacher';
+                    goBackToRoomCards(); 
+                } else {
+                    showLogin('teacher');
+                }
+            } else if (sectionName === 'admin') {
+                if (currentUser && currentUser.role === 'admin') {
+                    document.getElementById('admin-section').classList.remove('hidden');
+                    document.getElementById('nav-admin').classList.add('bg-navy-light');
+                    currentSection = 'admin';
+                    loadAdminData(); 
+                    initAdminToggles();
+                } else {
+                    showLogin('admin');
+                }
+            }
+        }
+        
+        function handleMuridLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('murid-username').value;
+            const password = document.getElementById('murid-password').value;
+            if (username.toLowerCase() === 'ujian' && password === '123') {
+                document.getElementById('main-wrapper').classList.add('hidden');
+                document.body.style.overflow = 'hidden';
+                const ujianSection = document.getElementById('ujian-section');
+                ujianSection.classList.remove('hidden');
+                document.getElementById('murid-username').value = '';
+                document.getElementById('murid-password').value = '';
+            } else {
+                alert('Nama pengguna atau kata laluan tidak sah. Sila cuba lagi.');
+            }
+        }
+
+        function logoutUjian() {
+            if (confirm("Anda pasti mahu keluar dari sesi ujian?")) {
+                const ujianSection = document.getElementById('ujian-section');
+                
+                // Set semula ujian apabila keluar
+                clearInterval(timerInterval);
+                document.getElementById('start-page').style.display = 'block';
+                document.getElementById('test-page').style.display = 'none';
+                document.getElementById('results-page').style.display = 'none';
+                document.getElementById('student-name').value = '';
+                document.getElementById('student-ic').value = '';
+                document.getElementById('student-address').value = '';
+                document.getElementById('student-upkk').value = '';
+                document.getElementById('student-room').selectedIndex = 0;
+                
+                // Reset status dan data
+                subjectStatus = { bm: false, bi: false, ba: false, mt: false };
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.classList.remove('locked');
+                    const span = tab.querySelector('span');
+                    if(span) span.textContent = '';
+                });
+                initializeUserAnswers();
+
+                ujianSection.classList.add('hidden');
+                document.getElementById('main-wrapper').classList.remove('hidden');
+                document.body.style.overflow = 'auto';
+                showSection('parent');
+            }
+        }
+        
+        function toggleParentView(button, viewKey) {
+            const span = button.querySelector("span");
+            const currentState = button.getAttribute("aria-checked") === "true";
+            const newState = !currentState;
+            localStorage.setItem(`parent_view_${viewKey}`, newState);
+            if (newState) {
+                button.setAttribute("aria-checked", "true");
+                button.classList.remove("bg-gray-200");
+                button.classList.add("bg-navy");
+                span.classList.remove("translate-x-0");
+                span.classList.add("translate-x-5");
+            } else {
+                button.setAttribute("aria-checked", "false");
+                button.classList.remove("bg-navy");
+                button.classList.add("bg-gray-200");
+                span.classList.remove("translate-x-5");
+                span.classList.add("translate-x-0");
+            }
+            alert('Tetapan paparan ibu bapa telah disimpan. Perubahan akan kelihatan di halaman Ibu Bapa.');
+        }
+
+        function initAdminToggles() {
+            const views = {'bilikUjian': document.getElementById('toggle-bilikUjian'),'carianKeputusan': document.getElementById('toggle-carianKeputusan')};
+            for (const [key, button] of Object.entries(views)) {
+                if (!button) continue;
+
+                let isEnabled;
+                if (key === 'carianKeputusan') {
+                    isEnabled = localStorage.getItem(`parent_view_${key}`) === 'true';
+                } else {
+                    isEnabled = localStorage.getItem(`parent_view_${key}`) !== 'false';
+                }
+
+                const span = button.querySelector("span");
+                if (isEnabled) {
+                    button.setAttribute("aria-checked", "true");
+                    button.classList.remove("bg-gray-200");
+                    button.classList.add("bg-navy");
+                    span.classList.remove("translate-x-0");
+                    span.classList.add("translate-x-5");
+                } else {
+                    button.setAttribute("aria-checked", "false");
+                    button.classList.remove("bg-navy");
+                    button.classList.add("bg-gray-200");
+                    span.classList.remove("translate-x-5");
+                    span.classList.add("translate-x-0");
+                }
+            }
+        }
+
+        function applyParentViewSettings() {
+            const bilikUjianBtn = document.getElementById('btn-bilik-ujian');
+            const carianKeputusanBtn = document.getElementById('btn-carian-keputusan');
+
+            const isBilikUjianVisible = localStorage.getItem('parent_view_bilikUjian') !== 'false';
+            const isCarianKeputusanVisible = localStorage.getItem('parent_view_carianKeputusan') === 'true';
+
+            if (bilikUjianBtn) bilikUjianBtn.style.display = isBilikUjianVisible ? 'block' : 'none';
+            if (carianKeputusanBtn) carianKeputusanBtn.style.display = isCarianKeputusanVisible ? 'block' : 'none';
+
+            const activeParentTab = sessionStorage.getItem('activeParentTab');
+
+            if (!isBilikUjianVisible && !isCarianKeputusanVisible) {
+                document.getElementById('bilik-ujian-content').classList.add('hidden');
+                document.getElementById('carian-keputusan-content').classList.add('hidden');
+                return;
+            }
+            if (!isBilikUjianVisible && isCarianKeputusanVisible) { showParentTab('carian'); return; }
+            if (isBilikUjianVisible && !isCarianKeputusanVisible) { showParentTab('bilik'); return; }
+            
+            if (activeParentTab === 'bilik' && !isBilikUjianVisible) showParentTab('carian');
+            else if (activeParentTab === 'carian' && !isCarianKeputusanVisible) showParentTab('bilik');
+            else showParentTab(activeParentTab || 'bilik');
+        }
+
+        function showAdminPanel(panelName) {
+            sessionStorage.setItem('activeAdminPanel', panelName);
+            document.querySelectorAll('.admin-main-panel').forEach(panel => {
+                panel.classList.add('hidden');
+            });
+            document.getElementById(`admin-panel-${panelName}`).classList.remove('hidden');
+
+            if (panelName === 'pendaftaran') {
+                renderRegistrationTable();
+                filterByRoomCard('semua');
+            }
+        }
+        
+        function refreshActivePanels_Silent() {
+            if (currentSection === "teacher" && currentRoom) {
+                loadTeacherTable();
+            } 
+            else if (currentSection === "admin") {
+                const adminDataPanel = document.getElementById('admin-panel-data');
+                if (adminDataPanel && !adminDataPanel.classList.contains('hidden')) {
+                    updateStatistics();
+                    if (currentAdminFilter.key) {
+                        renderFilteredAdminTable();
+                    }
+                }
+            }
+        }
+        
+        function isDataEntered(student) {
+            if (!student) return false;
+            const hasUpkk = student.upkk && String(student.upkk).trim() !== '';
+            const hasQuran = (student.quran || 0) > 0;
+            const hasHafazan = (student.hafazan || 0) > 0;
+            const hasPajsk = (student.pajsk || 0) > 0;
+            return hasUpkk || hasQuran || hasHafazan || hasPajsk;
+        }
+
+        function checkForNewData(oldData, newData) {
+            const oldDataMap = new Map(oldData.map(student => [student.ic, student]));
+            const newDataCounts = {};
+            for (let i = 1; i <= 15; i++) {
+                newDataCounts[`Bilik ${i}`] = 0;
+            }
+            for (const newStudent of newData) {
+                if (!newStudent.room) continue;
+                const oldStudent = oldDataMap.get(newStudent.ic);
+                if (!isDataEntered(oldStudent) && isDataEntered(newStudent)) {
+                    if (newDataCounts.hasOwnProperty(newStudent.room)) {
+                       newDataCounts[newStudent.room]++;
+                    }
+                }
+            }
+            for (const roomName in newDataCounts) {
+                const count = newDataCounts[roomName];
+                if (count > 0) {
+                    const existingCount = parseInt(sessionStorage.getItem(`newDataCount_${roomName}`), 10) || 0;
+                    const newTotalCount = existingCount + count;
+                    sessionStorage.setItem(`newDataInRoom_${roomName}`, 'true');
+                    sessionStorage.setItem(`newDataCount_${roomName}`, newTotalCount);
+                }
+            }
+        }
+
+        function loadFromGoogleSheets(isSilentUpdate = false) {
+            const oldStudentsDataForCheck = JSON.parse(JSON.stringify(studentsData));
+
+            if (GOOGLE_APP_SCRIPT_URL === "URL_ANDA_DI_SINI") {
+                if (!isSilentUpdate) alert("Sila kemaskini URL Google Apps Script.");
+                return;
+            }
+
+            fetch(GOOGLE_APP_SCRIPT_URL)
+                .then(response => {
+                    if (!response.ok) throw new Error(`Network response was not ok. Status: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) throw new Error(`Error from Google Apps Script: ${data.error}`);
+                    
+                    let newStudentsData = [];
+                    if (data.marksData && Array.isArray(data.marksData)) {
+                        let rowCounter = 0;
+                        newStudentsData = data.marksData.map(row => {
+                            const student = {
+                                name: row['nama'] || '', 
+                                ic: String(row['no. kp'] || '').trim(),
+                                uniqueId: `${String(row['no. kp'] || '').trim()}-${rowCounter++}`,
+                                address: row['alamat ringkas'] || '', upkk: row['upkk'] || '',
+                                bm: parseFloat(row['bm (30)']) || 0, bi: parseFloat(row['bi (20)']) || 0, ba: parseFloat(row['ba (30)']) || 0, math: parseFloat(row['mat (20)']) || 0, 
+                                quran: parseFloat(row['al-quran (10)']) || 0, hafazan: parseFloat(row['hafazan (10)']) || 0, pajsk: parseFloat(row['pajsk (10)']) || 0, 
+                                gender: (row['jantina'] || '').toLowerCase(), action: row['tindakan'] || '', room: row['bilik ujian'] || '', status: row['status'] || ''
+                            };
+                            if (student.name) student.name = student.name.toUpperCase();
+                            if (!student.gender) {
+                                if (student.name.includes(" BIN ")) student.gender = "lelaki";
+                                else if (student.name.includes(" BINTI ")) student.gender = "perempuan";
+                            }
+                            updateStatusAndAction(student);
+                            return student;
+                        });
+                    }
+
+                    if (isSilentUpdate && oldStudentsDataForCheck.length > 0) {
+                        checkForNewData(oldStudentsDataForCheck, newStudentsData);
+                    }
+                    
+                    studentsData = newStudentsData;
+
+                    const adminRegistrationPanel = document.getElementById('admin-panel-pendaftaran');
+                    if (data.registrationData && Array.isArray(data.registrationData)) {
+                        if (!isSilentUpdate || (adminRegistrationPanel && adminRegistrationPanel.classList.contains('hidden'))) {
+                            localStorage.setItem('unsavedRegistrations', JSON.stringify(data.registrationData));
+                            if(document.getElementById('registration-table-body') && currentSection === 'admin') {
+                                renderRegistrationTable();
+                            }
+                        }
+                    }
+                    
+                    displayRoomSummaryCards(); 
+                    if(isSilentUpdate) {
+                        refreshActivePanels_Silent();
+                    } else if (!isSilentUpdate) {
+                         refreshActivePanels_Silent(); 
+                    }
+                })
+                .catch(error => {
+                    console.error("Gagal memuatkan data:", error);
+                });
+        }
+        
+        function populateRoomSelectors() {
+            const teacherSelect = document.getElementById("room-select");
+            const parentSelect = document.getElementById("parent-room-select");
+            if (teacherSelect) {
+                teacherSelect.innerHTML = '<option value="">-- Pilih Bilik --</option>';
+                for (let i = 1; i <= 15; i++) teacherSelect.innerHTML += `<option value="Bilik ${i}">Bilik ${i}</option>`;
+            }
+            if (parentSelect) {
+                parentSelect.innerHTML = '<option value="">-- Sila Pilih --</option>';
+                for (let i = 1; i <= 15; i++) parentSelect.innerHTML += `<option value="Bilik ${i}">Bilik ${i}</option>`;
+            }
+        }
+        
+        function showLogin(role) {
+            const modal = document.getElementById("login-modal");
+            const titleElement = modal.querySelector("h3");
+            if (role === 'admin') {
+                titleElement.textContent = "Log Masuk Admin";
+            } else if (role === 'teacher') {
+                titleElement.textContent = "Log Masuk Guru";
+            }
+            modal.classList.remove("hidden");
+            modal.setAttribute("data-role", role);
+        }
+
+        function closeLogin(){document.getElementById("login-modal").classList.add("hidden"),document.getElementById("username").value="",document.getElementById("password").value=""}function handleLogin(e){e.preventDefault();const t=document.getElementById("username").value,o=document.getElementById("password").value,n=document.getElementById("login-modal").getAttribute("data-role");"admin"===n&&"admin"===t&&"1"===o?(currentUser={u:t,role:"admin"},closeLogin(),showSection("admin"),alert("Log masuk Admin berjaya!")):"teacher"===n&&"guru"===t&&"1"===o?(currentUser={u:t,role:"teacher"},closeLogin(),showSection("teacher"),alert("Log masuk Guru berjaya!")):alert("Nama pengguna atau kata laluan tidak sah!")}
+        function displayStudentsByRoom(){const selectedRoom=document.getElementById("parent-room-select").value,displayDiv=document.getElementById("student-list-display");if(selectedRoom){const registrationData=JSON.parse(localStorage.getItem("unsavedRegistrations")||"[]");registrationData.sort((a,b)=>(a.nama||"").localeCompare(b.nama||""));const studentsInRoom=registrationData.filter(student=>(student['bilik ujian'])&& (student['bilik ujian']).trim().toUpperCase()===selectedRoom.trim().toUpperCase());if(0!==studentsInRoom.length){let tableHTML='<div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-600"><thead class="text-xs text-gray-700 uppercase bg-gray-100"><tr><th scope="col" class="px-2 py-3 w-12 text-center">BIL</th><th scope="col" class="px-4 py-3">NAMA MURID</th><th scope="col" class="px-4 py-3">ALAMAT RINGKAS</th></tr></thead><tbody>';studentsInRoom.forEach((student,index)=>{tableHTML+=`<tr class="bg-white border-b hover:bg-gray-50"><td class="px-2 py-3 font-medium text-gray-900 text-center">${index+1}</td><td class="px-4 py-3">${(student.nama||"N/A").toUpperCase()}</td><td class="px-4 py-3">${(student['alamat ringkas']||"N/A").toUpperCase()}</td></tr>`}),tableHTML+="</tbody></table></div>",displayDiv.innerHTML=tableHTML}else displayDiv.innerHTML='<p class="text-center text-gray-500">Tiada calon yang didaftarkan untuk bilik ini.</p>'}else displayDiv.innerHTML='<p class="text-center text-gray-500">Senarai murid akan dipaparkan di sini.</p>'}
+        
+        function checkStudentRegistration(event) {
+            event.preventDefault();
+            const icToFind = document.getElementById("parent-check-ic").value.trim();
+            const displayContainer = document.getElementById("student-check-display");
+
+            if (!icToFind) {
+                displayContainer.innerHTML = '<p class="text-center text-gray-500">Sila masukkan Nombor Kad Pengenalan.</p>';
+                return;
+            }
+
+            const allRegistrationsData = JSON.parse(localStorage.getItem("unsavedRegistrations") || "[]");
+            
+            const foundStudent = allRegistrationsData.find(student => {
+                if (student && student['no. kp']) {
+                    const studentIC = String(student['no. kp']).trim().replace(/\D/g, "");
+                    const searchIC = icToFind.replace(/\D/g, "");
+                    return studentIC === searchIC;
+                }
+                return false;
+            });
+
+            if (foundStudent) {
+                displayContainer.innerHTML = `
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-gray-600">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3">BILIK UJIAN</th>
+                                    <th scope="col" class="px-4 py-3">NAMA MURID</th>
+                                    <th scope="col" class="px-4 py-3">ALAMAT RINGKAS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="bg-white border-b">
+                                    <td class="px-4 py-3 font-medium text-gray-900">${String(foundStudent['bilik ujian'] || "TIADA").toUpperCase()}</td>
+                                    <td class="px-4 py-3">${String(foundStudent.nama || "N/A").toUpperCase()}</td>
+                                    <td class="px-4 py-3">${String(foundStudent['alamat ringkas'] || "N/A").toUpperCase()}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>`;
+            } else {
+                displayContainer.innerHTML = '<p class="text-center text-red-500 font-medium">Rekod tidak dijumpai. Sila pastikan No. Kad Pengenalan adalah betul dan calon telah didaftarkan oleh Admin.</p>';
+            }
+        }
+
+        function searchStudent(e){e.preventDefault();const t=document.getElementById("parent-ic").value.trim(),o=studentsData.find(e=>String(e.ic).trim()===t);o?displayStudentResults(o):(document.getElementById("student-results").classList.add("hidden"),document.getElementById("not-found").classList.remove("hidden"),document.getElementById("final-decision").classList.add("hidden"))}
+        function displayStudentResults(e){document.getElementById("student-info").innerHTML=`<div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 mb-6"><div><strong>NAMA:</strong></div><div>${e.name.toUpperCase()}</div><div><strong>NO. KAD PENGENALAN:</strong></div><div>${e.ic}</div><div><strong>BILIK UJIAN:</strong></div><div>${(e.room||"N/A").toUpperCase()}</div></div>`,document.getElementById("marks-table").innerHTML=[{name:"BAHASA MELAYU",max:30,score:e.bm},{name:"BAHASA INGGERIS",max:20,score:e.bi},{name:"BAHASA ARAB",max:30,score:e.ba},{name:"MATEMATIK",max:20,score:e.math},{name:"UPKK",max:"-",score:e.upkk},{name:"BACAAN AL-QURAN",max:10,score:e.quran},{name:"HAFAZAN",max:10,score:e.hafazan},{name:"PAJSK",max:10,score:e.pajsk}].map(e=>{let t="";return t=/[a-zA-Z]/.test(e.score)?String(e.score).toUpperCase():"number"==typeof e.score?e.score.toFixed(2).replace(".00",""):e.score||"",`<tr><td class="border p-3">${e.name}</td><td class="border p-3 text-center">${e.max}</td><td class="border p-3 text-center">${t}</td></tr>`}).join("");const t=calculateTotal(e),o=calculatePercentage(t);document.getElementById("total-results").innerHTML=`<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-center"><div class="bg-navy text-white p-4 rounded-lg"><div class="text-2xl font-bold">${t.toFixed(2)}</div><div class="text-sm">JUMLAH</div></div><div class="bg-green-600 text-white p-4 rounded-lg"><div class="text-2xl font-bold">${o.toFixed(2)}%</div><div class="text-sm">PERATUS</div></div></div>`;const n=document.getElementById("final-decision");let a="";"DITERIMA"===e.action||"RAYUAN"===e.action?a='<div class="bg-green-100 border-l-4 border-green-500 text-green-800 p-4"><p class="font-bold text-lg">KEPUTUSAN: '+e.action+'</p><p class="mt-2">TAHNIAH! Anda berjaya.</p></div>':"DITOLAK"===e.action&&(a='<div class="bg-red-100 border-l-4 border-red-500 text-red-800 p-4"><p class="font-bold text-lg">KEPUTUSAN: '+e.action+'</p><p class="mt-2">Dukacita dimaklumkan permohonan anda tidak berjaya.</p></div>'),n.innerHTML=a,document.getElementById("student-results").classList.remove("hidden"),document.getElementById("not-found").classList.add("hidden"),n.classList.remove("hidden")}
+        function resetSearch(){document.getElementById("parent-ic").value="",document.getElementById("student-results").classList.add("hidden"),document.getElementById("not-found").classList.add("hidden"),document.getElementById("final-decision").classList.add("hidden")}
+        
+        function goBackToRoomCards() {
+            document.getElementById("teacher-controls").classList.add("hidden");
+            document.getElementById("teacher-main-view").classList.remove("hidden");
+            document.getElementById("room-select").value = "";
+            document.getElementById("teacher-current-room").textContent = "";
+            currentRoom = '';
+            displayRoomSummaryCards(); 
+        }
+        
+        function displayRoomSummaryCards() {
+            const container = document.getElementById("room-summary-cards");
+            if (!container) return;
+            
+            container.innerHTML = "";
+            for (let i = 1; i <= 15; i++) {
+                const roomName = `Bilik ${i}`;
+                const studentsInRoom = studentsData.filter(student => student.room && student.room.trim().toUpperCase() === roomName.trim().toUpperCase());
+                const maleCount = studentsInRoom.filter(student => student.gender === 'lelaki').length;
+                const femaleCount = studentsInRoom.filter(student => student.gender === 'perempuan').length;
+                const totalCount = studentsInRoom.length;
+                
+                const hasNewData = sessionStorage.getItem(`newDataInRoom_${roomName}`) === 'true';
+                const newDataCount = sessionStorage.getItem(`newDataCount_${roomName}`);
+
+                let bellClass = 'text-blue-500';
+                let notificationBadgeHTML = '';
+
+                if (hasNewData && newDataCount > 0) {
+                    bellClass = 'text-red-500 animate-pulse';
+                    notificationBadgeHTML = `
+                        <span class="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                            ${newDataCount}
+                        </span>
+                    `;
+                }
+                
+                const bellIconHTML = `
+                    <div class="notification-bell relative">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ${bellClass}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        ${notificationBadgeHTML}
+                    </div>
+                `;
+
+                container.innerHTML += `
+                <div onclick="selectRoomFromCard('${roomName}')" class="transform transition-all duration-300 hover:scale-105 hover:shadow-xl cursor-pointer bg-gradient-to-br from-blue-100 to-pink-100 p-4 rounded-lg shadow-lg flex flex-col justify-between border border-gray-200">
+                    <div>
+                        <div class="flex justify-between items-start mb-3">
+                            <h3 class="font-bold text-base text-gray-700">BILIK UJIAN ${i}</h3>
+                            ${bellIconHTML}
+                        </div>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex items-center justify-between bg-white/60 p-1 px-2 rounded-lg">
+                                <span class="font-semibold text-blue-800">Lelaki</span>
+                                <span class="font-extrabold text-lg text-blue-600">${maleCount}</span>
+                            </div>
+                            <div class="flex items-center justify-between bg-white/60 p-1 px-2 rounded-lg">
+                                <span class="font-semibold text-pink-800">Perempuan</span>
+                                <span class="font-extrabold text-lg text-pink-500">${femaleCount}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-gray-300/50 text-right">
+                        <span class="text-xs text-gray-500">Jumlah Calon:</span>
+                        <span class="font-bold text-gray-800">${totalCount}</span>
+                    </div>
+                </div>`;
+            }
+        }
+        
+        function selectRoomFromCard(roomName){
+            sessionStorage.removeItem(`newDataInRoom_${roomName}`);
+            sessionStorage.removeItem(`newDataCount_${roomName}`);
+            document.getElementById("room-select").value = roomName;
+            loadRoomData();
+        }
+
+        function loadRoomData() {
+            currentRoom = document.getElementById("room-select").value;
+            if(currentRoom) {
+                sessionStorage.removeItem(`newDataInRoom_${currentRoom}`);
+                sessionStorage.removeItem(`newDataCount_${currentRoom}`);
+                displayRoomSummaryCards();
+            }
+
+            if (currentRoom) {
+                document.getElementById("teacher-controls").classList.remove("hidden");
+                document.getElementById("teacher-main-view").classList.add("hidden");
+                document.getElementById("teacher-current-room").textContent = `BILIK UJIAN ${currentRoom.replace("Bilik ", "")}`;
+                currentPage = 1;
+                loadTeacherTable();
+            } else {
+                goBackToRoomCards();
+            }
+        }
+
+        function loadTeacherTable(){let e=studentsData.filter(e=>e.room&&e.room.trim().toUpperCase()===currentRoom.trim().toUpperCase());const t=document.getElementById("teacher-search").value.toLowerCase();t&&(e=e.filter(e=>e.name.toLowerCase().includes(t)||String(e.ic).includes(t))),displayTeacherTable(e)}
+        
+        function displayTeacherTable(studentsToDisplay) {
+            const tableBody = document.getElementById("teacher-table-body");
+            const startIndex = (currentPage - 1) * recordsPerPage;
+            const paginatedStudents = studentsToDisplay.slice(startIndex, startIndex + recordsPerPage);
+            
+            let tableHTML = "";
+            paginatedStudents.forEach((student, index) => {
+                const total = calculateTotal(student);
+                const percentage = calculatePercentage(total);
+                
+                tableHTML += `
+                <tr class="hover:bg-gray-50 text-sm">
+                    <td class="px-2 py-3">
+                        <span onclick="toggleTeacherDetailsRow('${student.uniqueId}', this)" class="cursor-pointer font-bold text-navy text-lg select-none">+</span>
+                    </td>
+                    <td class="px-2 py-3">${startIndex + index + 1}</td>
+                    <td class="px-2 py-3">${student.name}</td>
+                    <td class="px-2 py-3">${student.ic}</td>
+                    <td class="px-2 py-3 text-center font-semibold text-gray-700">${Math.round(student.bm)}</td>
+                    <td class="px-2 py-3 text-center font-semibold text-gray-700">${Math.round(student.bi)}</td>
+                    <td class="px-2 py-3 text-center font-semibold text-gray-700">${Math.round(student.ba)}</td>
+                    <td class="px-2 py-3 text-center font-semibold text-gray-700">${Math.round(student.math)}</td>
+                    <td class="px-2 py-3 text-center">
+                        <input type="text" value="${student.upkk || ''}" class="w-20 p-1 border rounded text-center text-xs" oninput="markAsChanged('${student.uniqueId}'); updateMarkAndRecalculate('${student.uniqueId}', 'upkk', this.value);">
+                    </td>
+                    <td class="px-2 py-3 text-center">
+                        <input type="number" step="0.01" max="10" value="${student.quran}" class="w-16 p-1 border rounded text-center" oninput="markAsChanged('${student.uniqueId}'); updateMarkAndRecalculate('${student.uniqueId}', 'quran', this.value);">
+                    </td>
+                    <td class="px-2 py-3 text-center">
+                        <input type="number" step="0.01" max="10" value="${student.hafazan}" class="w-16 p-1 border rounded text-center" oninput="markAsChanged('${student.uniqueId}'); updateMarkAndRecalculate('${student.uniqueId}', 'hafazan', this.value);">
+                    </td>
+                    <td class="px-2 py-3 text-center">
+                        <input type="number" step="0.01" max="10" value="${student.pajsk}" class="w-16 p-1 border rounded text-center" oninput="markAsChanged('${student.uniqueId}'); updateMarkAndRecalculate('${student.uniqueId}', 'pajsk', this.value);">
+                    </td>
+                    <td class="px-2 py-3 text-center font-bold" id="total-${student.uniqueId}">${total.toFixed(2)}</td>
+                    <td class="px-2 py-3 text-center font-bold" id="percentage-${student.uniqueId}">${percentage.toFixed(2)}%</td>
+                    <td class="px-2 py-3 text-center">
+                        <button onclick="saveTeacherData(event, '${student.uniqueId}')" class="bg-navy text-white px-3 py-1 text-xs rounded hover:bg-navy-dark transition-colors">Simpan</button>
+                    </td>
+                </tr>
+                <tr id="details-teacher-${student.uniqueId}" class="hidden bg-blue-50">
+                    <td colspan="15" class="p-4 text-sm text-left">
+                        <div class="flex items-center gap-2">
+                            <strong>Jantina:</strong>
+                            <select onchange="markAsChanged('${student.uniqueId}'); updateGender('${student.uniqueId}', this.value);" class="px-2 py-1 border rounded text-xs">
+                                <option value="" ${!student.gender ? 'selected' : ''}>Pilih...</option>
+                                <option value="lelaki" ${student.gender === 'lelaki' ? 'selected' : ''}>Lelaki</option>
+                                <option value="perempuan" ${student.gender === 'perempuan' ? 'selected' : ''}>Perempuan</option>
+                            </select>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+            tableBody.innerHTML = tableHTML;
+            updatePagination(studentsToDisplay.length);
+        }
+
+        function updateMarkAndRecalculate(uniqueId, field, value) {
+            const student = studentsData.find(s => s.uniqueId === uniqueId);
+            if (student) {
+                student[field] = (field === 'upkk') ? value : (parseFloat(value) || 0);
+                updateStatusAndAction(student);
+                const total = calculateTotal(student);
+                const percentage = calculatePercentage(total);
+                
+                const totalCell = document.getElementById(`total-${student.uniqueId}`);
+                if (totalCell) totalCell.textContent = total.toFixed(2);
+                
+                const percentageCell = document.getElementById(`percentage-${student.uniqueId}`);
+                if (percentageCell) percentageCell.textContent = percentage.toFixed(2) + '%';
+            }
+        }
+
+        function updateGender(uniqueId, gender) {
+            const student = studentsData.find(s => s.uniqueId === uniqueId);
+            if (student) {
+                student.gender = gender;
+                updateStatusAndAction(student);
+                updateStatistics(); 
+            }
+        }
+        function toggleTeacherDetailsRow(e,t){(e=document.getElementById(`details-teacher-${e}`))&&("+"===(t.textContent=e.classList.toggle("hidden")?"+":"−"))}
+        
+        function loadAdminData() {
+            showRanking();
+            updateStatistics();
+        }
+
+        function showResults() {
+            document.getElementById('akhir-summary-cards').classList.remove('hidden');
+            document.getElementById('gred-summary-cards').classList.add('hidden');
+            document.getElementById('admin-table-area').classList.add('hidden');
+            currentAdminFilter = { key: null, value: null, title: null };
+            
+            const titleContainer = document.getElementById('admin-data-title-container');
+            const titleElement = document.getElementById('admin-data-title');
+            titleElement.textContent = "Keputusan Akhir";
+            titleContainer.classList.remove('hidden');
+            titleContainer.classList.add('flex');
+        }
+
+        function showRanking() {
+            document.getElementById('akhir-summary-cards').classList.add('hidden');
+            document.getElementById('gred-summary-cards').classList.remove('hidden');
+            document.getElementById('admin-table-area').classList.add('hidden');
+            currentAdminFilter = { key: null, value: null, title: null };
+
+            const titleContainer = document.getElementById('admin-data-title-container');
+            const titleElement = document.getElementById('admin-data-title');
+            titleElement.textContent = "Keputusan Ikut Gred";
+            titleContainer.classList.remove('hidden');
+            titleContainer.classList.add('flex');
+        }
+
+        function showAdminFilteredTable(filterKey, filterValue, title) {
+            currentAdminFilter = { key: filterKey, value: filterValue, title: title };
+            renderFilteredAdminTable();
+        }
+
+        function renderFilteredAdminTable() {
+            if (!currentAdminFilter.key) return;
+
+            document.getElementById('admin-table-area').classList.remove('hidden');
+            document.getElementById('admin-table-heading').textContent = currentAdminFilter.title;
+
+            let filteredStudents = studentsData;
+
+            const searchTerm = document.getElementById("admin-search").value.toLowerCase();
+            if (searchTerm) {
+                filteredStudents = filteredStudents.filter(student =>
+                    student.name.toLowerCase().includes(searchTerm) || String(student.ic).includes(searchTerm)
+                );
+            }
+            
+            filteredStudents = filteredStudents.filter(student => student[currentAdminFilter.key] === currentAdminFilter.value);
+
+            sortStudentGroup(filteredStudents);
+            
+            const tableBody = document.getElementById("admin-table-body");
+            let tableHTML = "";
+            if (filteredStudents.length > 0) {
+                filteredStudents.forEach((student, index) => {
+                    tableHTML += generateStudentRowHTML(student, index + 1);
+                });
+            } else {
+                tableHTML = `<tr><td colspan="17" class="text-center py-8">Tiada data untuk paparan ini.</td></tr>`;
+            }
+            tableBody.innerHTML = tableHTML;
+        }
+
+        function generateStudentRowHTML(e,t){const o=calculateTotal(e),n=calculatePercentage(o),a=getStatusClass(e.status);return` <tr class="hover:bg-gray-50 border-b"><td class="px-2 py-3 text-center"><span onclick="toggleDetailsRow('${e.uniqueId}', this, event)" class="cursor-pointer font-bold text-navy text-lg select-none">+</span></td> <td class="px-2 py-3 text-sm text-center">${t}</td><td class="px-3 py-3 text-sm">${e.name}</td><td class="px-3 py-3 text-sm">${e.ic}</td> <td class="px-2 py-3 text-center text-sm">${Math.round(e.bm)}</td><td class="px-2 py-3 text-center text-sm">${Math.round(e.bi)}</td><td class="px-2 py-3 text-center text-sm">${Math.round(e.ba)}</td><td class="px-2 py-3 text-center text-sm">${Math.round(e.math)}</td> <td class="px-2 py-3 text-center text-sm">${String(e.upkk||"").toUpperCase()}</td><td class="px-2 py-3 text-center text-sm">${Math.round(e.quran)}</td><td class="px-2 py-3 text-center text-sm">${Math.round(e.hafazan)}</td><td class="px-2 py-3 text-center text-sm">${e.pajsk.toFixed(2)}</td> <td class="px-2 py-3 text-center font-bold text-sm">${o.toFixed(2)}</td><td class="px-2 py-3 text-center font-bold text-sm">${n.toFixed(2)}%</td> <td class="px-2 py-3 text-center"><span class="px-2 py-1 rounded text-xs font-medium ${a}">${e.status||"N/A"}</span></td> <td class="px-2 py-3 text-center"><select onchange="updateAction('${e.uniqueId}', this.value)" class="px-1 py-1 border rounded text-xs"><option value="DITERIMA" ${"DITERIMA"===e.action?"selected":""}>DITERIMA</option><option value="DITOLAK" ${"DITOLAK"===e.action?"selected":""}>DITOLAK</option><option value="RAYUAN" ${"RAYUAN"===e.action?"selected":""}>RAYUAN</option></select></td> <td class="px-2 py-3 text-center"><button onclick="saveStudentData(event, '${e.uniqueId}')" class="bg-green-600 text-white px-3 py-1 text-xs rounded hover:bg-green-700 transition-colors">Simpan</button></td> </tr> <tr id="details-${e.uniqueId}" class="hidden bg-blue-50"> <td colspan="17" class="p-4 text-sm"> <div><strong>Alamat:</strong> ${String(e.address||"Tiada maklumat").toUpperCase()}</div><div><strong>Bilik Ujian:</strong> ${e.room||"Tidak dinyatakan"}</div><div><strong>Jantina:</strong> ${e.gender?e.gender.charAt(0).toUpperCase()+e.gender.slice(1):"Tidak dinyatakan"}</div> </td> </tr>`}
+        function toggleDetailsRow(e,t,o){o.stopPropagation();const n=document.getElementById(`details-${e}`);n&&("+"===(t.textContent=n.classList.toggle("hidden")?"+":"-"))}
+        
+        function updateAction(uniqueId, action) {
+            const student = studentsData.find(s => s.uniqueId === uniqueId);
+            if (student) {
+                student.action = action;
+                updateStatistics();
+            }
+        }
+        
+        function updateStatistics(){
+            const totalStudents = studentsData.length;
+            const totalLelaki = studentsData.filter(s => s.gender === 'lelaki').length;
+            const totalPerempuan = totalStudents - totalLelaki;
+
+            const diterima = studentsData.filter(s => s.action === 'DITERIMA');
+            const ditolak = studentsData.filter(s => s.action === 'DITOLAK');
+            const rayuan = studentsData.filter(s => s.action === 'RAYUAN');
+            
+            document.getElementById("diterima-count").textContent = diterima.length;
+            document.getElementById("diterima-lelaki").textContent = diterima.filter(s => s.gender === 'lelaki').length;
+            document.getElementById("diterima-perempuan").textContent = diterima.filter(s => s.gender === 'perempuan').length;
+            
+            document.getElementById("ditolak-count").textContent = ditolak.length;
+            document.getElementById("ditolak-lelaki").textContent = ditolak.filter(s => s.gender === 'lelaki').length;
+            document.getElementById("ditolak-perempuan").textContent = ditolak.filter(s => s.gender === 'perempuan').length;
+
+            document.getElementById("rayuan-count").textContent = rayuan.length;
+            document.getElementById("rayuan-lelaki").textContent = rayuan.filter(s => s.gender === 'lelaki').length;
+            document.getElementById("rayuan-perempuan").textContent = rayuan.filter(s => s.gender === 'perempuan').length;
+
+            document.getElementById("total-students").textContent = totalStudents;
+            document.getElementById("total-lelaki").textContent = totalLelaki;
+            document.getElementById("total-perempuan").textContent = totalPerempuan;
+
+            const cemerlang = studentsData.filter(s => s.status === 'CEMERLANG');
+            const baik = studentsData.filter(s => s.status === 'BAIK');
+            const lulus = studentsData.filter(s => s.status === 'LULUS');
+            const gagal = studentsData.filter(s => s.status === 'GAGAL');
+
+            document.getElementById("cemerlang-count").textContent = cemerlang.length;
+            document.getElementById("cemerlang-lelaki").textContent = cemerlang.filter(s => s.gender === 'lelaki').length;
+            document.getElementById("cemerlang-perempuan").textContent = cemerlang.filter(s => s.gender === 'perempuan').length;
+
+            document.getElementById("baik-count").textContent = baik.length;
+            document.getElementById("baik-lelaki").textContent = baik.filter(s => s.gender === 'lelaki').length;
+            document.getElementById("baik-perempuan").textContent = baik.filter(s => s.gender === 'perempuan').length;
+
+            document.getElementById("lulus-count").textContent = lulus.length;
+            document.getElementById("lulus-lelaki").textContent = lulus.filter(s => s.gender === 'lelaki').length;
+            document.getElementById("lulus-perempuan").textContent = lulus.filter(s => s.gender === 'perempuan').length;
+
+            document.getElementById("gagal-count").textContent = gagal.length;
+            document.getElementById("gagal-lelaki").textContent = gagal.filter(s => s.gender === 'lelaki').length;
+            document.getElementById("gagal-perempuan").textContent = gagal.filter(s => s.gender === 'perempuan').length;
+            
+            document.getElementById("total-students-gred").textContent = totalStudents;
+            document.getElementById("total-lelaki-gred").textContent = totalLelaki;
+            document.getElementById("total-perempuan-gred").textContent = totalPerempuan;
+        }
+
+        function filterTeacherTable(){loadTeacherTable()}
+        function sortStudentGroup(e){const t=document.getElementById("ranking-subject").value;e.sort((e,o)=>"total"===t?calculateTotal(o)-calculateTotal(e):(o[t]||0)-(e[t]||0))}
+        function calculateTotal(e){return(e.bm||0)+(e.bi||0)+(e.ba||0)+(e.math||0)+(e.quran||0)+(e.hafazan||0)+(e.pajsk||0)}
+        function calculatePercentage(e){return 130==0?0:e/130*100}
+        function calculateStatus(e){const t=calculatePercentage(calculateTotal(e));return t>=80&&(e.quran||0)>=9&&(e.math||0)>=15?"CEMERLANG":t>=60&&(e.quran||0)>=7&&(e.math||0)>=10?"BAIK":t>=50&&(e.quran||0)>=5&&(e.math||0)>=7?"LULUS":"GAGAL"}
+        function updateStatusAndAction(e){e.status=calculateStatus(e),e.action&&""!==e.action.trim()||(e.action="GAGAL"===e.status?"DITOLAK":"DITERIMA")}
+        function getStatusClass(e){return{CEMERLANG:"bg-green-100 text-green-800",BAIK:"bg-blue-100 text-blue-800",LULUS:"bg-yellow-100 text-yellow-800",GAGAL:"bg-red-100 text-red-800"}[e]||"bg-gray-100 text-gray-800"}
+        function updatePagination(e){const t=Math.ceil(e/recordsPerPage),o=0<e?(currentPage-1)*recordsPerPage+1:0,n=Math.min(currentPage*recordsPerPage,e);document.getElementById("showing-start").textContent=o,document.getElementById("showing-end").textContent=n,document.getElementById("total-records").textContent=e,document.getElementById("prev-btn").disabled=1===currentPage,document.getElementById("next-btn").disabled=currentPage>=t}
+        function previousPage(){1<currentPage&&(currentPage--,loadTeacherTable())}
+        function nextPage(){const e=studentsData.filter(e=>e.room&&e.room.trim().toUpperCase()===currentRoom.trim().toUpperCase()).length;currentPage*recordsPerPage<e&&(currentPage++,loadTeacherTable())}
+        
+        function saveTeacherData(event, uniqueId) {
+            const student = studentsData.find(s => s.uniqueId === uniqueId);
+            if (!student) {
+                return alert("Ralat: Data calon tidak dijumpai.");
+            }
+            if (!unsavedChanges[uniqueId]) {
+                return alert("Tiada perubahan untuk disimpan bagi calon ini.");
+            }
+
+            const button = event.target;
+            const originalText = "Simpan";
+            button.textContent = "Menyimpan...";
+            button.disabled = true;
+
+            updateStatusAndAction(student);
+
+            const dataToSave = {
+                "no. kp": student.ic,
+                "nama": student.name, 
+                upkk: student.upkk, "al-quran (10)": student.quran, "hafazan (10)": student.hafazan,
+                "pajsk (10)": student.pajsk, jantina: student.gender, status: student.status, tindakan: student.action
+            };
+
+            const dataToSend = { action: "updateMultipleMarks", payload: [dataToSave], secret: "SmaamMersing2025@" };
+
+            fetch(GOOGLE_APP_SCRIPT_URL, {
+                method: "POST", cache: "no-cache", headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify(dataToSend)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "Success") {
+                    button.textContent = "✔ Disimpan";
+                    button.classList.remove("bg-navy", "hover:bg-navy-dark");
+                    button.classList.add("bg-green-600");
+                    delete unsavedChanges[uniqueId]; 
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.disabled = false;
+                        button.classList.remove("bg-green-600");
+                        button.classList.add("bg-navy", "hover:bg-navy-dark");
+                    }, 2000);
+                } else {
+                    return Promise.reject(new Error(data.message || "Ralat tidak diketahui."));
+                }
+            })
+            .catch(error => {
+                button.textContent = "✘ Gagal";
+                button.classList.remove("bg-navy", "hover:bg-navy-dark");
+                button.classList.add("bg-red-600");
+                console.error("Ralat menyimpan data guru:", error);
+                alert(`Ralat berlaku semasa menyimpan. Sila cuba lagi.\n\nDetail: ${error.message}`);
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.disabled = false;
+                    button.classList.remove("bg-red-600");
+                    button.classList.add("bg-navy", "hover:bg-navy-dark");
+                }, 3000);
+            });
+        }
+        
+        function saveStudentData(event, uniqueId) {
+            const student = studentsData.find(s => s.uniqueId === uniqueId);
+            if (!student) {
+                alert("Ralat: Data calon tidak dijumpai.");
+                return;
+            }
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = "Menyimpan...";
+            button.disabled = true;
+            
+            const dataToSave = {
+                "no. kp": student.ic,
+                "nama": student.name, 
+                upkk: student.upkk,
+                "al-quran (10)": student.quran,
+                "hafazan (10)": student.hafazan,
+                "pajsk (10)": student.pajsk,
+                jantina: student.gender,
+                status: student.status,
+                tindakan: student.action
+            };
+            const dataToSend = {
+                action: "updateMultipleMarks",
+                payload: [dataToSave],
+                secret: "SmaamMersing2025@"
+            };
+            fetch(GOOGLE_APP_SCRIPT_URL, {
+                method: "POST",
+                cache: "no-cache",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify(dataToSend)
+            })
+            .then(response => {
+                if (!response.ok) throw new Error(`Ralat rangkaian. Status: ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === "Success") {
+                    button.textContent = "✔ Disimpan";
+                    button.classList.remove("bg-green-600");
+                    button.classList.add("bg-blue-600");
+                    alert(`Tindakan untuk ${student.name} berjaya disimpan.`);
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.disabled = false;
+                        button.classList.remove("bg-blue-600");
+                        button.classList.add("bg-green-600");
+                    }, 2000);
+                } else {
+                    return Promise.reject(new Error(data.message || "Ralat tidak diketahui dari skrip."));
+                }
+            })
+            .catch(error => {
+                button.textContent = "✘ Gagal";
+                button.classList.remove("bg-green-600");
+                button.classList.add("bg-red-600");
+                console.error("Ralat semasa menyimpan tindakan:", error);
+                alert(`Ralat berlaku semasa menyimpan. Sila cuba lagi.\n\nDetail Ralat: ${error.message}`);
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.disabled = false;
+                    button.classList.remove("bg-red-600");
+                    button.classList.add("bg-green-600");
+                }, 3000);
+            });
+        }
+        
+        function renderRegistrationTable(){
+            const tableBody = document.getElementById("registration-table-body");
+            let registrations = JSON.parse(localStorage.getItem("unsavedRegistrations") || "[]");
+            
+            const selectedRoom = currentRegistrationFilter;
+            if (selectedRoom !== "semua") {
+                registrations = registrations.filter(reg => reg['bilik ujian'] === selectedRoom);
+            }
+
+            const { key: sortKey, direction: sortDirection } = registrationSortConfig;
+            const keyMap = { name: 'nama', ic: 'no. kp', address: 'alamat ringkas', room: 'bilik ujian', gender: 'jantina' };
+            const actualSortKey = keyMap[sortKey];
+            
+            registrations.sort((a, b) => {
+                const valA = (a[actualSortKey] || "").toUpperCase();
+                const valB = (b[actualSortKey] || "").toUpperCase();
+                return sortDirection === 'ascending' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            });
+
+            updateRegistrationCounts(registrations);
+            tableBody.innerHTML = "";
+            registrations.forEach((reg, index) => {
+                const newRow = tableBody.insertRow();
+                populateRegistrationRow(newRow, reg, index + 1);
+            });
+
+            updateSortIcons();
+            renderRegistrationSummaryGrid();
+        }
+
+        function sortRegistrationTable(key) {
+            const newDirection = registrationSortConfig.direction === 'ascending' && registrationSortConfig.key === key ? 'descending' : 'ascending';
+            registrationSortConfig = { key: key, direction: newDirection };
+            renderRegistrationTable();
+        }
+
+        function updateSortIcons() {
+            document.querySelectorAll("#registration-table .sort-arrow").forEach(span => span.textContent = " ");
+            const activeArrow = document.querySelector(`#registration-table th[data-sort-key="${registrationSortConfig.key}"] .sort-arrow`);
+            if (activeArrow) {
+                activeArrow.textContent = registrationSortConfig.direction === 'ascending' ? ' ▲' : ' ▼';
+            }
+        }
+
+        function updateRegistrationCounts(registrations) {
+            const maleCount = registrations.filter(r => r.jantina === "lelaki").length;
+            const femaleCount = registrations.filter(r => r.jantina === "perempuan").length;
+            document.getElementById("male-count-display").textContent = maleCount;
+            document.getElementById("female-count-display").textContent = femaleCount;
+        }
+        
+        function renderRegistrationSummaryGrid() {
+            const container = document.getElementById('registration-summary-grid');
+            if (!container) return;
+
+            const allRegistrations = JSON.parse(localStorage.getItem("unsavedRegistrations") || "[]");
+            let gridHTML = '';
+            let totalLelaki = 0;
+            let totalPerempuan = 0;
+            
+            const cardClass = 'rounded-lg p-2 text-center shadow-sm cursor-pointer transition-all duration-200 hover:shadow-lg bg-gradient-to-br from-blue-200 to-pink-200';
+
+            for (let i = 1; i <= 15; i++) {
+                const roomName = `Bilik ${i}`;
+                const studentsInRoom = allRegistrations.filter(s => s['bilik ujian'] === roomName);
+                const maleCount = studentsInRoom.filter(s => s.jantina === 'lelaki').length;
+                const femaleCount = studentsInRoom.filter(s => s.jantina === 'perempuan').length;
+                const totalInRoom = maleCount + femaleCount;
+
+                totalLelaki += maleCount;
+                totalPerempuan += femaleCount;
+
+                gridHTML += `
+                    <div id="reg-card-Bilik ${i}" onclick="filterByRoomCard('Bilik ${i}')" class="${cardClass}">
+                        <p class="font-bold text-gray-800 text-sm">BILIK ${i}</p>
+                        <p class="text-xs text-gray-600 my-0.5">L${maleCount} | P${femaleCount}</p>
+                        <p class="text-2xl font-bold text-black">${totalInRoom}</p>
+                    </div>`;
+            }
+
+            const grandTotal = totalLelaki + totalPerempuan;
+            gridHTML += `
+                <div id="reg-card-semua" onclick="filterByRoomCard('semua')" class="rounded-lg p-2 text-center shadow-sm cursor-pointer transition-all duration-200 hover:shadow-lg bg-navy">
+                    <p class="font-bold text-white text-sm">JUMLAH</p>
+                    <p class="text-xs text-blue-200 my-0.5">L${totalLelaki} | P${totalPerempuan}</p>
+                    <p class="text-2xl font-bold text-white">${grandTotal}</p>
+                </div>`;
+            
+            container.innerHTML = gridHTML;
+        }
+
+
+        function filterByRoomCard(roomName) {
+            currentRegistrationFilter = roomName;
+
+            const allCards = document.querySelectorAll('#registration-summary-grid > div');
+            allCards.forEach(card => card.classList.remove('ring-2', 'ring-offset-2', 'ring-navy'));
+
+            const selectedCard = document.getElementById(`reg-card-${roomName.replace(' ', '\\ ')}`);
+            if (selectedCard) {
+                selectedCard.classList.add('ring-2', 'ring-offset-2', 'ring-navy');
+            }
+            renderRegistrationTable();
+        }
+        
+        function saveAllRegistrationChanges(button) {
+            const tableBody = document.getElementById("registration-table-body");
+            const rows = tableBody.querySelectorAll("tr");
+            const registrationDataFromUI = [];
+            rows.forEach(row => {
+                const nameInput = row.querySelector('[data-col="name"]');
+                const icInput = row.querySelector('[data-col="ic"]');
+                const addressInput = row.querySelector('[data-col="address"]');
+                const roomSelect = row.querySelector('[data-col="room"]');
+                const genderSelect = row.querySelector('[data-col="gender"]');
+
+                if ((nameInput && nameInput.value.trim() !== "") || (icInput && icInput.value.trim() !== "")) {
+                    registrationDataFromUI.push({
+                        "nama": nameInput ? nameInput.value.trim().toUpperCase() : "",
+                        "no. kp": icInput ? icInput.value.trim() : "",
+                        "alamat ringkas": addressInput ? addressInput.value.trim().toUpperCase() : "",
+                        "bilik ujian": roomSelect ? roomSelect.value : "",
+                        "jantina": genderSelect ? genderSelect.value : ""
+                    });
+                }
+            });
+
+            localStorage.setItem("unsavedRegistrations", JSON.stringify(registrationDataFromUI));
+
+            const originalHTML = button.innerHTML;
+            const originalClassName = button.className;
+            button.innerHTML = "Menyimpan...";
+            button.disabled = true;
+
+            const dataToSend = {
+                action: "saveRegistrations",
+                payload: registrationDataFromUI,
+                secret: "SmaamMersing2025@"
+            };
+
+            fetch(GOOGLE_APP_SCRIPT_URL, {
+                method: "POST",
+                cache: "no-cache",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify(dataToSend)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "Success") {
+                    localStorage.setItem('unsavedRegistrations', JSON.stringify(registrationDataFromUI));
+                    button.innerHTML = "✔ Disimpan";
+                    button.className = originalClassName.replace("bg-navy", "bg-green-600").replace("hover:bg-navy-dark", "hover:bg-green-700");
+                    alert("Perubahan pendaftaran telah berjaya disimpan ke Google Sheet.");
+                    setTimeout(() => {
+                        button.innerHTML = originalHTML;
+                        button.className = originalClassName;
+                        button.disabled = false;
+                        renderRegistrationTable(); 
+                    }, 2000);
+                } else {
+                    return Promise.reject(new Error(data.message || "Ralat tidak diketahui dari skrip."));
+                }
+            })
+            .catch(error => {
+                console.error("Gagal menyimpan ke Google Sheets:", error);
+                alert(`Ralat menyimpan ke Google Sheet. Sila cuba lagi.\n(${error.message})`);
+                button.innerHTML = "✘ Gagal";
+                button.className = originalClassName.replace("bg-navy", "bg-red-600");
+                setTimeout(() => {
+                    button.innerHTML = originalHTML;
+                    button.className = originalClassName;
+                    button.disabled = false;
+                }, 3000);
+            });
+        }
+
+        function refreshRegistrationData(e){if(confirm("Anda pasti mahu memuat semula data dari Google Sheet? Sebarang perubahan yang belum disimpan akan hilang.")){const t=e.innerHTML;e.innerHTML="Menyegarkan...",e.disabled=!0,loadFromGoogleSheets(),setTimeout(()=>{e.innerHTML=t,e.disabled=!1,alert("Data telah berjaya disegarkan!")},1500)}}
+        function addRegistrationRow(){const e=document.getElementById("registration-table-body").insertRow(0);populateRegistrationRow(e,{},1);renumberVisibleRows()}
+        
+        function populateRegistrationRow(e,t,bil){let o='<option value="">-- Pilih --</option>';for(let n=1;n<=15;n++){const a=`Bilik ${n}`;o+=`<option value="${a}">${a}</option>`}const currentRoom=t['bilik ujian'];const currentGender=t.jantina;e.innerHTML=`<td class="px-4 py-2 border-b">${bil}</td><td class="px-4 py-2 border-b"><input type="text" data-col="name" class="w-full px-2 py-1 border rounded-md" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()" placeholder="Nama Penuh" value="${(t.nama||"").toUpperCase()}"></td><td class="px-4 py-2 border-b"><input type="text" data-col="ic" class="w-full px-2 py-1 border rounded-md" placeholder="No. KP" value="${t['no. kp']||""}"></td><td class="px-4 py-2 border-b"><input type="text" data-col="address" class="w-full px-2 py-1 border rounded-md" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()" placeholder="cth: Mersing, Johor" value="${(t['alamat ringkas']||"").toUpperCase()}"></td><td class="px-4 py-2 border-b"><select data-col="room" class="w-full px-2 py-1 border rounded-md bg-white">${o.replace(`value="${currentRoom}"`,`value="${currentRoom}" selected`)}</select></td><td class="px-4 py-2 border-b"><select data-col="gender" class="w-full px-2 py-1 border rounded-md bg-white"><option value="">-- Pilih --</option><option value="lelaki" ${"lelaki"===currentGender?"selected":""}>Lelaki</option><option value="perempuan" ${"perempuan"===currentGender?"selected":""}>Perempuan</option></select></td><td class="px-4 py-2 border-b text-center"><button onclick="deleteRegistrationRow(this)" class="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600">Hapus</button></td>`}
+        
+        function deleteRegistrationRow(e){if(confirm("Anda pasti mahu memadam baris ini?")){e.closest("tr").remove(),renumberVisibleRows()}}
+        function renumberVisibleRows(){const e=document.querySelectorAll("#registration-table-body tr");e.forEach((e,t)=>{e.cells[0].textContent=t+1})}
+        
+        // ==========================================
+        // FUNGSI UJIAN DARI UJIAN.HTML
+        // ==========================================
+        const testData = {
+            bm: { name: "Bahasa Melayu", total: 30, questions: [ { q: "Azman seorang murid yang ________ dan ceria.", o: ["sihat", "kotor", "malas", "lambat"], a: 0 }, { q: "Muaz seorang atlet yang mengamalkan pemakanan yang ________.", o: ["ringan", "seimbang", "mewah", "berlebihan"], a: 1 }, { q: "Setiap pagi, David akan bersenam di hadapan rumahnya. Bersenam dapat menjadikan mindanya ________.", o: ["ceria", "cerdas", "cergas", "cerdik"], a: 1 }, { q: "Umar akan mandi dan membersihkan badannya dengan sabun supaya ________.", o: ["wangi", "berminyak", "melekit", "basah"], a: 0 }, { q: "Dato Azam sering kelihatan ________ dan tampan sepanjang masa.", o: ["kelam", "kemas", "bagus", "baik"], a: 1 }, { q: "Ayah Halim telah ________ di pasar itu sejak lima tahun lalu.", o: ["berjalan", "menonton", "berniaga", "bermain"], a: 2 }, { q: "Encik Peter membawa keluarganya ________ di Air Terjun Kota Tinggi.", o: ["berkelah", "berlari", "berbaris", "berbisik"], a: 0 }, { q: "Murid-murid perlu ________ di dewan untuk mendengar ceramah.", o: ["berlawan", "bersurai", "berkumpul", "berdiam"], a: 2 }, { q: "Aina sakit perut ________ daripada makan makanan yang basi.", o: ["suka", "angkara", "akibat", "musabab"], a: 2 }, { q: "Perbarisan sempena Hari Kebangsaan itu akan disertai oleh rakyat ________ kaum.", o: ["beberapa", "berbilang", "hanya satu", "segerombolan"], a: 1 }, { q: "Mereka ________ bola sepak di padang.", o: ["bermain", "berlari", "berehat", "bertenang"], a: 0 }, { q: "Jangan ________ semasa menaiki tangga.", o: ["senyum", "menjerit", "berdiam", "bergurau"], a: 3 }, { q: "Dia memakai ________ semasa menunggang motosikal.", o: ["topi keledar", "jubah", "serban", "kemeja"], a: 0 }, { q: '"Jemputlah ________, pak cik," kata Siti.', o: ["berdiri", "masuk", "menunggu", "beredar"], a: 1 }, { q: "Mereka sedang ________ taman sains.", o: ["membersihkan", "merosakkan", "membiarkan", "mengotorkan"], a: 0 }, { q: "Ahmad memikul ________ sebagai ketua kelas dengan penuh dedikasi.", o: ["tugas", "tanggungan", "tanggungjawab", "kepercayaan"], a: 2 }, { q: "Ayah membeli tiket ________ untuk ke Jakarta.", o: ["kereta api", "kapal terbang", "kapal selam", "bas ekspres"], a: 1 }, { q: "Ramai pelancong datang untuk menikmati keindahan ________.", o: ["air panas", "air sejuk", "air terjun", "air gunung"], a: 2 }, { q: "________ yang bersih mencerminkan sikap bertanggungjawab masyarakat.", o: ["Kaki satu", "Kaki lima", "Kaki batu", "Kaki bangku"], a: 1 }, { q: "Ibu meletakkan ________ itu di sudut bilik.", o: ["Kipas-kipas", "Rak kasut", "Kipas angin", "Rak pinggan"], a: 2 }, { q: "Pilih ayat yang betul menggunakan perkataan yang dicondongkan.<br>I. Dia membaca <i>buku</i> cerita di perpustakaan.<br>II. Di kedai itu, terdapat banyak <i>buku</i> untuk dijual.<br>III. Setiap pelajar perlu menyimpan <i>buku</i> kira-kira mereka dengan baik.<br>IV. Saya akan membuat <i>buku</i> untuk menyimpan gambar-gambar lama.", o: ["I, II dan III", "I, II dan IV", "II, III dan IV", "Semua di atas"], a: 0 }, { q: "Pilih ayat yang betul menggunakan perkataan yang dicondongkan.<br>I. Gunung itu sangat <i>tinggi</i> dan sukar didaki.<br>II. Suara penyanyi itu sangat <i>tinggi</i> dan merdu.<br>III. Dia mempunyai cita-cita yang <i>tinggi</i> dalam bidang pendidikan.<br>IV. Meja itu <i>tinggi</i> sehingga saya tidak boleh mencapai barang di dalamnya.", o: ["I, II dan III", "I, II dan IV", "II, III dan IV", "Semua di atas"], a: 0 }, { q: "Pilih ayat yang betul menggunakan perkataan yang dicondongkan.<br>I. <i>Layar</i> kapal itu berkibar-kibar ditiup angin.<br>II. Kami menonton filem di <i>layar</i> besar di pawagam.<br>III. Dia membeli <i>layar</i> untuk menghidangkan makanan di meja.<br>IV. Di dalam kelas, guru menunjukkan bahan pembelajaran di <i>layar</i> projek.", o: ["I, II dan III", "I, II dan IV", "II, III dan IV", "Semua di atas"], a: 1 }, { q: "Pilih ayat yang betul menggunakan perkataan yang dicondongkan.<br>I. Mereka bermain di dalam <i>kapal</i> ketika hujan.<br>II. <i>Kapal</i> itu berlayar di lautan yang tenang.<br>III. Kami melawat <i>kapal</i> perang di Muzium Maritim.<br>IV. <i>Kapal</i> itu membawa muatan barang dari pelabuhan ke pelabuhan.", o: ["I, II dan III", "I, II dan IV", "II, III dan IV", "Semua di atas"], a: 2 }, { q: "Pilih ayat yang betul menggunakan perkataan yang dicondongkan.<br>I. Amir mempunyai <i>hati</i> yang baik dan selalu membantu orang lain.<br>II. Doktor memeriksa <i>hati</i> pesakit untuk memastikan ia berfungsi dengan baik.<br>III. Makanan yang kita makan memberi kesan kepada <i>hati</i> dan kesihatan kita.<br>IV. Dia berbicara dengan penuh <i>hati</i> dan keikhlasan kepada temannya.", o: ["I, II dan III", "I, II dan IV", "II, III dan IV", "Semua di atas"], a: 3 }, { q: "Cikgu Fatimah sentiasa ________ tentang pelajaran anak-anak muridnya.", o: ["ada jalan", "ambil berat", "air tangan", "ada hati"], a: 1 }, { q: "Haziq ________ dalam permainan badminton.", o: ["ada jalan", "ada hati", "ada bakat", "ada angin"], a: 2 }, { q: "Sebelum pergi ke sekolah, Ayu makan sekeping roti sebagai ________.", o: ["akal kancil", "alas perut", "ada jalan", "anak kandung"], a: 1 }, { q: "Setelah penat mengulangkaji pelajaran, saya ________ di taman yang berhampiran.", o: ["ambil berat", "ada hati", "ambil hati", "ambil angin"], a: 3 }, { q: "Hasan dan Husin menjadi ________ setelah ibunya meninggal dunia.", o: ["anak yatim", "anak angkat", "anak kandung", "anak emas"], a: 0 }, ] },
+            bi: { name: "Bahasa Inggeris", total: 20, questions: [ { q: "From the picture above, we can say that...<br><img src='https://i.postimg.cc/TwQKXx87/1.png' alt='Question 1'>", o: ["The boy has a test starting in one hour", "The boy is happy that he has one hour for the test", "The boy is shocked that he only has one hour for the test"], a: 2 }, { q: "The football practice for this week is...<br><img src='https://i.postimg.cc/mk5htSg7/2.png' alt='Question 2'>", o: ["in the school field", "postponed", "at 5 p.m."], a: 1 }, { q: "Where can you find the above sign?<br><img src='https://i.postimg.cc/tRZsMLS5/3.png' alt='Question 3'>", o: ["at school", "supermarkets", "toys and children wear"], a: 1 }, { q: "The above image indicates the following except...<br><img src='https://i.postimg.cc/k45nKtZs/3.jpg' alt='Question 4'>", o: ["traditional food", "traditional clothes", "multi-ethnics"], a: 0 }, { q: "Maria's mother's message to her tells us that...<br><img src='https://i.postimg.cc/CKrKvNbX/5.png' alt='Question 5'>", o: ["her mother had no time to cook dinner", "to heat up food on the stove", "to heat up food which is in the refrigerator"], a: 2 }, { q: "Aunt Jamilah...<br><img src='https://i.postimg.cc/44935py2/6.jpg' alt='Question 6'>", o: ["Sent a book to Nadhira", "Read a book to Nadhira", "Received a book from Nadhira"], a: 0 }, { q: "I ________ enjoy reading and surfing the internet.", o: ["enjoy", "enjoys", "enjoying"], a: 0 }, { q: "A few students ________ decorating the stage.", o: ["Is", "Are", "Was"], a: 1 }, { q: "Every member of the Tan family ________ wearing a bright blue cap.", o: ["Are", "Is", "Am"], a: 1 }, { q: "________ little boy was knocked down by ________ speeding car on Jalan Awang Besar this morning.", o: ["an, a, the", "a, a, -", "a, the, an"], a: 1 }, { q: "Aminah is ________ attractive young woman. She works as ________ teacher in Mersing.", o: ["the, a", "an, the", "an, a"], a: 2 }, { q: "________ you lie to your parents, I'm sure you'll be in serious trouble.", o: ["If", "As", "When"], a: 0 }, { q: "Zul was knocked down by a car yesterday, and ________ had to admitted in hospital.", o: ["but", "however", "consequently"], a: 2 }, { q: "First, Mr. Lim went to the supermarket. ________, she went to the post office.", o: ["therefore", "after that", "but"], a: 1 }, { q: "I ________ not ________ my grandma in hospital because I have something to do.", o: ["Are ... visiting", "Is ... visiting", "Am ... visiting"], a: 2 }, { q: "The boys are not playing football today as of their friends ________ not ________ well.", o: ["Is ... feels", "Are ... feels", "Is ... feeling", "Are ... feeling"], a: 3 }, { q: "My sister felt insulted and walked ________ out of the hall.", o: ["Correctly", "Angrily", "Shyly", "Carefully"], a: 1 }, { q: "She often completes her homework ________.", o: ["KLCC", "In class", "On the stage"], a: 1 }, { q: "If you want to get good seats, please come ________.", o: ["Early", "Daily", "For four days"], a: 0 }, { q: "Hari Raya is coming soon and we will have a few days of holiday. Shall we go ________?", o: ["Early", "Abroad", "In the stadium"], a: 1 }, ] },
+            ba: { name: "Bahasa Arab", total: 30, questions: [ { q: "يسكن الجد في ________.", o: ["القرية", "المكتبة", "الدكان", "المدرسة"], a: 0 }, { q: "________ معلمة.", o: ["هو", "هما", "هي", "هن"], a: 2 }, { q: "________ صابون.", o: ["هذا", "هذه", "تلك", "هؤلاء"], a: 0 }, { q: "تطبخ ________ في المطبخ.", o: ["الأب", "العم", "الأخ", "الأم"], a: 3 }, { q: "ذهب عمر ________ جوهر بهارو.", o: ["من", "ب", "مع", "إلى"], a: 3 }, { q: "أنظف أسناني بـ ________.", o: ["فرشاة الأسنان", "مروحة", "حقيبة", "شوكة"], a: 0 }, { q: "يعيش ________ في البحر.", o: ["السمك", "البقرة", "الطيور", "الدجاجة"], a: 0 }, { q: "قرأت عائشة ________.", o: ["المجلة", "القلم", "التلفاز", "الحاسوب"], a: 0 }, { q: "البنات قرأن القرآن في ________.", o: ["الحمام", "المصلى", "السوق", "المطبخ"], a: 1 }, { q: "أين يعمل التاجر؟", o: ["المستشفى", "الدكان", "الغرفة", "المسجد"], a: 1 }, { q: "________ يعمل في مركز الشرطة.", o: ["المعلم", "المدير", "الشرطي", "الطبيب"], a: 2 }, { q: "أركب ________ إلى المدينة.", o: ["الحافلة", "المكتب", "المقلمة", "القمر"], a: 0 }, { q: "المسلمون ________ بعضهم بعضا.", o: ["يشد", "يشدون", "أشد", "نشد"], a: 1 }, { q: "الجنة ________ أقدام الأمهات.", o: ["على", "فوق", "تحت", "أمام"], a: 2 }, { q: "________ الطلاب كرة القدم.", o: ["يلعب", "تلعب", "يلعبون", "تلعبان"], a: 2 }, { q: "عين الاسم في الكلمات الآتية.", o: ["الدفتر", "أكل", "تنام", "يجلس"], a: 0 }, { q: " عين الفعل في الكلمات الآتية.", o: ["البحر", "محمد", "يحمل", "المأموم"], a: 2 }, { q: "عين الحرف في الكلمات الآتية.", o: ["الرسالة", "في", "الحديقة", "أسافر"], a: 1 }, { q: "عين الفعل في الكلمات الآتية.", o: ["بلقيس", "قامت", "سلوى", "القرآن"], a: 1 }, { q: "عين الاسم في الكلمات الآتية.", o: ["على", "أقرأ", "طالبة", "ساعدت"], a: 2 }, { q: "زيد ________.", o: ["طالب", "طالبة"], a: 0 }, { q: "المدرسة ________.", o: ["واسع", "واسعة"], a: 1 }, { q: "المأكولات ________.", o: ["لذيذ", "لذيذة"], a: 1 }, { q: "المدرسان ________.", o: ["مجتهدان", "مجتهدات"], a: 0 }, { q: "عثمان فلاح ________.", o: ["نشيط", "نشيطة"], a: 0 }, { q: "نحن ________ على الكرسي.", o: ["جلسن", "جلسنا", "جلس"], a: 1 }, { q: "هي ________ من المكتبة.", o: ["يرجع", "ترجع", "أرجع"], a: 1 }, { q: "أنا ________ في الفصل.", o: ["درستُ", "درسنا", "درسوا"], a: 0 }, { q: "هم ________ الملابس.", o: ["لبسا", "لبسوا", "لبست"], a: 1 }, { q: "أنتم ________ الأرز.", o: ["أكل", "أكلوا", "أكلتم"], a: 2 }, ] },
+            mt: { name: "Matematik", total: 20, questions: [ { q: "Rajah 1 menunjukkan empat kad nombor. Bentuk satu nombor terbesar menggunakan digit daripada setiap kad itu.<br><img src='https://i.postimg.cc/XNtHjmCs/kad-no.png' alt='Rajah 1'>", o: ["834 620", "864 230", "864 320", "846 203"], a: 2 }, { q: "Jika 0.604 juta di bundarkan kepada puluh ribu yang hampir, nombornya ialah", o: ["640 000", "604 000", "600 400", "600 000"], a: 3 }, { q: "Rajah 2 di bawah menunjukkan satu garis nombor. Apakah nilai X?<br><img src='https://i.postimg.cc/d03sTygB/m3.jpg' alt='Rajah 2'>", o: ["1/2", "1/3", "1/4", "1/5"], a: 0 }, { q: "73.65 ÷ 5 =", o: ["14 + 73/1000", "14 + 7/10 + 3/100", "14 + 7/100 + 3/1000", "14 + 7/10 + 3/1000"], a: 1 }, { q: "Rajah 3 menunjukkan satu ayat matematik yang tidak lengkap. 25 120 - ________ = 23 870", o: ["150", "250", "1 150", "1 250"], a: 3 }, { q: "0.305 x 4 =", o: ["1.11", "1.22", "1.33", "1.44"], a: 1 }, { q: "5 minggu 2 hari - 2 minggu 6 hari =", o: ["2 minggu 3 hari", "3 minggu 3 hari", "3 minggu 4 hari", "6 minggu 4 hari"], a: 0 }, { q: "32.5 - 7.52 - 5 =", o: ["24.48", "20.02", "19.98", "19.88"], a: 2 }, { q: "RM700 dikurangkan sebanyak 75% menjadi", o: ["RM175", "RM525", "RM625", "RM675"], a: 0 }, { q: "Rajah 4 terdiri daripada tiga buah segi tiga sama kaki yang sama. Perimeter kawasan berlorek ialah 30 cm. Hitung perimeter, dalam cm, seluruh rajah itu.<br><img src='https://i.postimg.cc/sg9yLcCK/8.jpg' alt='Rajah 4'>", o: ["46", "57", "68", "90"], a: 0 }, { q: "Nyatakan median bagi set nombor di Rajah 5. <br> 8, 14, 16, 10, 8", o: ["4", "8", "10", "16"], a: 2 }, { q: "Kirakan min bagi skor 122, 120, 236 dan 242.", o: ["120", "122", "180", "242"], a: 2 }, { q: "Wang simpanan 3 orang penyimpan ditunjukkan dalam Jadual 1. Diberi purata simpanan mereka ialah RM750. Hitungkan wang simpanan Chow.<br><img src='https://i.postimg.cc/25Hs53zv/13.png' alt='Jadual 1'>", o: ["RM500", "RM1750", "RM2500", "RM3000"], a: 0 }, { q: "Rajah 6 ialah sebuah carta pai yang menunjukkan peratusan hobi 40 orang murid di sebuah sekolah. Nyatakan nisbah bagi bilangan hobi memasak kepada bilangan hobi bersukan.<br><img src='https://i.postimg.cc/5yBbMqFx/m14.jpg' alt='Rajah 6'>", o: ["3 : 5", "3 : 4", "4 : 5", "5 : 8"], a: 0 }, { q: "Rajah 7 ialah satu satah Cartes yang menunjukkan kedudukan beberapa buah rumah. Nyatakan koordinat bagi menunjukkan kedudukan rumah Atan.<br><img src='https://i.postimg.cc/HWXp5Hvf/m15.jpg' alt='Rajah 7'>", o: ["(2, 3)", "(3, 2)", "(6, 4)", "(7, 3)"], a: 1 }, { q: "Rajah 8 ialah satu piktograf yang menunjukkan bilangan setem yang dikumpul oleh 5 orang murid. Berapakah perbezaan bilangan setem yang dikumpul oleh murid paling banyak dengan yang paling sedikit?<br><img src='https://i.postimg.cc/jSSrS3g1/m16.jpg' alt='Rajah 8'>", o: [150, 200, 250, 300], a: 2 }, { q: "Rajah 9 menunjukkan waktu Sakinah makan malam. Selepas 50 minit, Syafiq mula mengulangkaji pelajarannya. Pada pukul berapakah dia mula membuat ulangkaji itu?<br><img src='https://i.postimg.cc/Kv5xqf2f/m17.jpg' alt='Rajah 9'>", o: ["Pukul 7:10 a.m", "Pukul 7:10 p.m", "Pukul 8:40 p.m", "Pukul 8:45 p.m"], a: 2 }, { q: "Rajah 10 menunjukkan garis lurus PQR. Panjang PQ adalah 2 kali panjang QR. Berapakah panjang, dalam m, PR?<br><img src='https://i.postimg.cc/DwjFFzmb/m18.jpg' alt='Rajah 10'>", o: [54, 60, 74, 80], a: 1 }, { q: "1 200 cucuk sate disediakan dalam satu jamuan. Sate tersebut diagihkan sama banyak kepada 100 orang tetamu. Berapakah bilangan cucuk sate yang diagihkan kepada 12 orang tetamu itu?", o: [12, 112, 120, 144], a: 3 }, { q: "Kedai Bunga Flo telah membeli 900 kuntum bunga ros. 32% daripadanya berwarna putih dan bakinya berwarna merah. 3/4 daripada ros merah telah dijual. Berapakah bilangan kuntum bunga ros merah yang tinggal?", o: [153, 216, 225, 459], a: 0 } ] }
+        };
+
+        let currentSubject = 'bm';
+        let currentQuestionIndex = 0;
+        let userAnswers = {};
+        let timerInterval;
+        let subjectStatus = { bm: false, bi: false, ba: false, mt: false };
+        let studentInfo = { name: '', ic: '', address: '', upkk: '', room: '' };
+
+        function initializeUserAnswers() { for (const subject in testData) { userAnswers[subject] = new Array(testData[subject].total).fill(null); } }
+
+        function startTest() {
+            studentInfo.name = document.getElementById('student-name').value.toUpperCase();
+            studentInfo.ic = document.getElementById('student-ic').value.toUpperCase();
+            studentInfo.address = document.getElementById('student-address').value.toUpperCase();
+            studentInfo.upkk = document.getElementById('student-upkk').value.toUpperCase();
+            studentInfo.room = document.getElementById('student-room').value;
+            
+            if (!studentInfo.name || !studentInfo.ic || !studentInfo.address || !studentInfo.room) {
+                alert("Sila lengkapkan semua maklumat: Nama Penuh, No. KP, Alamat Ringkas, dan Bilik Ujian.");
+                return;
+            }
+            
+            document.getElementById('start-page').style.display = 'none';
+            document.getElementById('test-page').style.display = 'block';
+            startTimer(90 * 60);
+            loadQuestion();
+        }
+
+        function startTimer(duration) { 
+            let timer = duration, minutes, seconds; 
+            const timerDisplay = document.getElementById('timer'); 
+            timerInterval = setInterval(() => { 
+                minutes = parseInt(timer / 60, 10); 
+                seconds = parseInt(timer % 60, 10); 
+                minutes = minutes < 10 ? "0" + minutes : minutes; 
+                seconds = seconds < 10 ? "0" + seconds : seconds; 
+                timerDisplay.textContent = minutes + ":" + seconds; 
+                if (--timer < 0) { 
+                    clearInterval(timerInterval); 
+                    alert("Masa telah tamat!"); 
+                    submitAllSubjects(); 
+                } 
+            }, 1000); 
+        }
+        
+        function showSubject(subject) { 
+            if (subjectStatus[subject]) return; 
+            currentSubject = subject; 
+            currentQuestionIndex = 0; 
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active')); 
+            document.querySelector(`.tab[data-subject="${subject}"]`).classList.add('active'); 
+            loadQuestion(); 
+        }
+        
+        function loadQuestion() { 
+            const questionArea = document.querySelector('.question-area'); 
+            const subject = testData[currentSubject]; 
+            const questionData = subject.questions[currentQuestionIndex]; 
+            let optionsHtml = ''; 
+            questionData.o.forEach((option, index) => { 
+                if (option === undefined || option === "") return; 
+                const isSelected = userAnswers[currentSubject][currentQuestionIndex] === index; 
+                optionsHtml += `<label class="option ${isSelected ? 'selected' : ''}" onclick="selectAnswer(${index})"><input type="radio" name="option" value="${index}" ${isSelected ? 'checked' : ''}> ${String.fromCharCode(65 + index)}. ${option}</label>`; 
+            }); 
+            const isArabic = currentSubject === 'ba'; 
+            questionArea.innerHTML = `<div class="question-container ${isArabic ? 'arabic-question' : ''}"><div class="question-number">Soalan ${currentQuestionIndex + 1}</div><div class="question-text">${questionData.q}</div><div class="options">${optionsHtml}</div></div>`; 
+            updateNavigation(); 
+            updateProgressBar(); 
+            document.getElementById('submit-subject-btn').onclick = submitCurrentSubject; 
+        }
+        
+        function selectAnswer(optionIndex) { 
+            userAnswers[currentSubject][currentQuestionIndex] = optionIndex; 
+            document.querySelectorAll('.options .option').forEach((label, index) => { 
+                label.classList.toggle('selected', index === optionIndex); 
+                if(index === optionIndex) label.querySelector('input').checked = true; 
+            }); 
+            updateProgressBar(); 
+        }
+        
+        function nextQuestion() { 
+            if (currentQuestionIndex < testData[currentSubject].total - 1) { 
+                currentQuestionIndex++; 
+                loadQuestion(); 
+            } 
+        }
+        
+        function prevQuestion() { 
+            if (currentQuestionIndex > 0) { 
+                currentQuestionIndex--; 
+                loadQuestion(); 
+            } 
+        }
+        
+        function updateNavigation() { 
+            document.getElementById('prev-btn-test').disabled = currentQuestionIndex === 0; 
+            document.getElementById('next-btn-test').disabled = currentQuestionIndex === testData[currentSubject].total - 1; 
+            document.getElementById('question-counter').textContent = `Soalan ${currentQuestionIndex + 1} / ${testData[currentSubject].total}`; 
+        }
+        
+        function updateProgressBar() { 
+            const answeredCount = userAnswers[currentSubject].filter(ans => ans !== null).length; 
+            const progress = (answeredCount / testData[currentSubject].total) * 100; 
+            document.getElementById('progress-bar').style.width = `${progress}%`; 
+        }
+        
+        function submitCurrentSubject() { 
+            const unanswered = userAnswers[currentSubject].filter(ans => ans === null).length; 
+            if (unanswered > 0) { 
+                if (!confirm(`Anda mempunyai ${unanswered} soalan yang belum dijawab. Adakah anda pasti untuk hantar?`)) return; 
+            } else { 
+                if (!confirm(`Adakah anda pasti untuk menghantar jawapan bagi ${testData[currentSubject].name}? Jawapan tidak boleh diubah selepas ini.`)) return; 
+            } 
+            subjectStatus[currentSubject] = true; 
+            const tab = document.querySelector(`.tab[data-subject="${currentSubject}"]`); 
+            tab.classList.add('locked'); 
+            document.getElementById(`${currentSubject}-lock`).textContent = ' 🔒'; 
+            const allSubmitted = Object.values(subjectStatus).every(status => status === true); 
+            if (allSubmitted) { 
+                clearInterval(timerInterval); 
+                showResults(); 
+            } else { 
+                const nextSubject = Object.keys(subjectStatus).find(s => !subjectStatus[s]); 
+                if (nextSubject) showSubject(nextSubject); 
+            } 
+        }
+        
+        function submitAllSubjects() { 
+            Object.keys(subjectStatus).forEach(subject => { 
+                if (!subjectStatus[subject]) { 
+                    subjectStatus[subject] = true; 
+                    const tab = document.querySelector(`.tab[data-subject="${subject}"]`); 
+                    tab.classList.add('locked'); 
+                    document.getElementById(`${subject}-lock`).textContent = ' 🔒'; 
+                } 
+            }); 
+            showResults(); 
+        }
+        
+        function showResults() { 
+            document.getElementById('test-page').style.display = 'none'; 
+            document.getElementById('results-page').style.display = 'block'; 
+            const studentInfoContainer = document.getElementById('student-info-summary'); 
+            studentInfoContainer.innerHTML = `<div class="table-responsive-wrapper"><table style="text-align:left;width:100%;border-collapse:collapse;background-color:#fafafa"><tr><th colspan="2" style="text-align:center;padding:10px;background-color:#e0f2f1;border:1px solid #ddd">Maklumat Calon</th></tr><tr><td style="font-weight:bold;padding:8px;border:1px solid #ddd;width:40%">Nama Penuh</td><td style="padding:8px;border:1px solid #ddd">${studentInfo.name}</td></tr><tr><td style="font-weight:bold;padding:8px;border:1px solid #ddd">No. Kad Pengenalan</td><td style="padding:8px;border:1px solid #ddd">${studentInfo.ic}</td></tr><tr><td style="font-weight:bold;padding:8px;border:1px solid #ddd">Alamat</td><td style="padding:8px;border:1px solid #ddd">${studentInfo.address}</td></tr><tr><td style="font-weight:bold;padding:8px;border:1px solid #ddd">Keputusan UPKK</td><td style="padding:8px;border:1px solid #ddd">${studentInfo.upkk}</td></tr><tr><td style="font-weight:bold;padding:8px;border:1px solid #ddd">Bilik Ujian</td><td style="padding:8px;border:1px solid #ddd">${studentInfo.room}</td></tr></table></div>`; 
+            
+            let totalCorrect = 0, totalQuestions = 0; 
+            let resultsHtml = `<div class="table-responsive-wrapper"><table><tr><th style="background-color:#e0f2f1">Mata Pelajaran</th><th style="background-color:#e0f2f1">Markah</th><th style="background-color:#e0f2f1">Peratus</th></tr>`; 
+            const finalScores = {}; 
+            
+            for (const subjectKey in testData) { 
+                const subject = testData[subjectKey]; 
+                let correctCount = 0; 
+                subject.questions.forEach((q, index) => { 
+                    if (userAnswers[subjectKey][index] === q.a) correctCount++; 
+                }); 
+                finalScores[subjectKey] = correctCount; 
+                totalCorrect += correctCount; 
+                totalQuestions += subject.total; 
+                const percentage = ((correctCount / subject.total) * 100).toFixed(1); 
+                resultsHtml += `<tr><td>${subject.name}</td><td>${correctCount} / ${subject.total}</td><td>${percentage}%</td></tr>`; 
+            } 
+            
+            const overallPercentage = ((totalCorrect / totalQuestions) * 100).toFixed(1); 
+            resultsHtml += `<tr style="font-weight:bold;background-color:#f0f4c3"><td>Jumlah Keseluruhan</td><td>${totalCorrect} / ${totalQuestions}</td><td>${overallPercentage}%</td></tr></table></div>`; 
+            document.getElementById('results-summary').innerHTML = resultsHtml; 
+            submitDataToGoogleSheet(finalScores); 
+        }
+        
+        function submitDataToGoogleSheet(scores) {
+            const submissionStatusEl = document.getElementById('submission-status');
+            submissionStatusEl.textContent = 'Keputusan anda sedang dihantar ke sistem...';
+            submissionStatusEl.style.color = '#555';
+            
+            const formData = new FormData();
+            formData.append('secret', "SmaamMersing2025@"); 
+            formData.append('name', studentInfo.name);
+            formData.append('ic', studentInfo.ic);
+            formData.append('address', studentInfo.address);
+            formData.append('upkk', studentInfo.upkk);
+            formData.append('room', studentInfo.room);
+            formData.append('bmScore', scores.bm);
+            formData.append('biScore', scores.bi);
+            formData.append('baScore', scores.ba);
+            formData.append('mtScore', scores.mt);
+            
+            fetch(GOOGLE_APP_SCRIPT_URL_UJIAN, { method: 'POST', body: formData, mode: 'no-cors' })
+            .then(() => {
+                console.log('Success (mode: no-cors): Data sent.');
+                submissionStatusEl.textContent = 'TAHNIAH! Keputusan ujian anda telah direkodkan dengan jayanya.';
+                submissionStatusEl.style.color = 'green';
+            })
+            .catch(error => {
+                console.error('Ralat Penghantaran Data Ujian:', error);
+                submissionStatusEl.textContent = 'TAHNIAH! Keputusan ujian anda telah direkodkan dengan jayanya.';
+                submissionStatusEl.style.color = 'green';
+            });
+        }
+        
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBilik = document.getElementById('toggle-bilikUjian');
+            const toggleCarian = document.getElementById('toggle-carianKeputusan');
+            const menuContainer = document.getElementById('menuBilik');
+
+            const checkAndUpdateMenuVisibility = () => {
+                if (!toggleBilik || !toggleCarian || !menuContainer) {
+                    return;
+                }
+                const isBilikOn = toggleBilik.getAttribute('aria-checked') === 'true';
+                const isCarianOn = toggleCarian.getAttribute('aria-checked') === 'true';
+
+                if (isBilikOn && isCarianOn) {
+                    menuContainer.style.display = 'flex';
+                } else {
+                    menuContainer.style.display = 'none';
+                }
+            };
+
+            if (toggleBilik) {
+                toggleBilik.addEventListener('click', checkAndUpdateMenuVisibility);
+            }
+            if (toggleCarian) {
+                toggleCarian.addEventListener('click', checkAndUpdateMenuVisibility);
+            }
+            
+            setTimeout(checkAndUpdateMenuVisibility, 100);
+        });
+    </script>
+</body>
+</html>
